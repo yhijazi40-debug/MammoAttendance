@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>حضور شع331</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Layout: lecturer console (3 tabs) + a single centred card for students. Colours follow the university system teal. */
+:root{
+  --bg:#eef3f6; --surface:#ffffff; --tint:#e6eff4; --ink:#13232d; --muted:#5a6f7d; --line:#d3dee5;
+  --accent:#0e8797; --accent-ink:#ffffff; --accent-soft:#d9eef2;
+  --on:#2e9e5b; --warn:#a96a00; --warn-soft:#fbefd5; --bad:#c0392b; --bad-soft:#f9e1de;
+  --font:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1920; --surface:#14262f; --tint:#1a3039; --ink:#e5eef3; --muted:#92a7b5; --line:#2a4350;
+  --accent:#3fc1d3; --accent-ink:#06222a; --accent-soft:#17414a;
+  --on:#3ecf80; --warn:#f0b34a; --warn-soft:#3a2d12; --bad:#ff8a7a; --bad-soft:#431e1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1920; --surface:#14262f; --tint:#1a3039; --ink:#e5eef3; --muted:#92a7b5; --line:#2a4350;
+  --accent:#3fc1d3; --accent-ink:#06222a; --accent-soft:#17414a;
+  --on:#3ecf80; --warn:#f0b34a; --warn-soft:#3a2d12; --bad:#ff8a7a; --bad-soft:#431e1a; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;
+  padding-block:20px 90px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:22px;margin:0;font-weight:700;text-wrap:balance}
+h2{font-size:16px;margin:0;font-weight:600}
+.eyebrow{font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{font:inherit;background:none;border:0;padding:10px 16px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:500;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.col{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+select,input[type=text],input[type=date],input[type=search],input[type=number],input[type=email],input[type=password]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-height:40px;max-width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:inherit;background:var(--surface);color:var(--ink);border:0;padding:8px 16px;min-height:40px;cursor:pointer}
+.seg button+button{border-right:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:8px 16px;min-height:40px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.ghost{font-weight:500}
+.btn.sm{min-height:32px;padding:3px 10px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px;background:var(--muted)}
+.dot.open{background:var(--warn)} .dot.done{background:var(--on)} .dot.draft{background:var(--accent)}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--tint);color:var(--muted);white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.qr{background:var(--accent-soft);color:var(--accent)}
+.notice{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:13px}
+.live{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:16px}
+@media (max-width:700px){.live{grid-template-columns:minmax(0,1fr)}}
+.qrbox{background:#fff;border-radius:10px;padding:14px;display:flex;justify-content:center;align-items:center;aspect-ratio:1;max-width:100%;border:1px solid var(--line)}
+.qrbox img,.qrbox canvas{max-width:100%;height:auto}
+.timer{height:6px;background:var(--tint);border-radius:3px;overflow:hidden}
+.timer i{display:block;height:100%;background:var(--accent);width:100%;transition:width 1s linear}
+.count{font-size:44px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.feed{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto;display:flex;flex-direction:column}
+.feed li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.feed li:last-child{border:0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:520px}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr{background:var(--tint)} tbody tr:nth-child(even){background:var(--surface)}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{font-variant-numeric:tabular-nums;text-align:center}
+td.name{min-width:170px}
+td input.nm{width:100%;min-width:160px}
+td select{min-height:34px;padding:4px 8px}
+@media (max-width:560px){.hm{display:none}}
+.sw{position:relative;display:inline-block;width:46px;height:26px}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%;z-index:1}
+.sw span{position:absolute;inset:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;transition:.15s}
+.sw span::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.15s}
+.sw input:checked+span{background:var(--on);border-color:var(--on)}
+.sw input:checked+span::after{right:23px;background:#fff}
+.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.sw.ro input{cursor:default}
+.sw.na span{border-style:dashed;opacity:.5}
+.pct.hi{color:var(--bad);font-weight:600}
+.bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));z-index:5}
+.bar .in{max-width:980px;margin:0 auto;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.pop{position:relative}
+.results{position:absolute;top:100%;right:0;left:0;z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:8px;max-height:240px;overflow:auto;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.results button{display:flex;width:100%;justify-content:space-between;gap:8px;font:inherit;color:var(--ink);background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer;text-align:right}
+.results button:hover{background:var(--tint)}
+#toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:90vw}
+[hidden]{display:none!important}
+textarea.copy{width:100%;min-height:110px;font:13px monospace;direction:ltr;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:8px}
+.stu{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding-top:12px}
+.stu .card{display:flex;flex-direction:column;gap:14px}
+.stu input.id{font-size:26px;text-align:center;direction:ltr;letter-spacing:.08em;min-height:56px;font-variant-numeric:tabular-nums}
+.stu .btn{min-height:50px;font-size:16px}
+.ok{background:var(--on);color:#fff;border-radius:50%;width:64px;height:64px;display:grid;place-items:center;font-size:34px;margin:0 auto}
+.err{background:var(--bad-soft);color:var(--bad);padding:10px 14px;border-radius:8px;font-size:14px}
+.center{text-align:center}
+.theme{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import {firebaseConfig} from './firebase-config.js';
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,query,where,onSnapshot,serverTimestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+const COURSE={code:'شع331',name:'تصوير الثدي بالأشعة',term:'الفصل الأول 2026-2027'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const configured=!!(firebaseConfig&&firebaseConfig.apiKey&&!String(firebaseConfig.apiKey).startsWith('PASTE'));
+let auth=null,db=null;
+if(configured){const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app)}
+
+/* ---------- helpers ---------- */
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2800)}
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const today=()=>ymd(new Date());
+const fmtDate=s=>{if(!s)return'';const [y,m,d]=s.split('-');return `${d}/${m}/${y}`};
+const dayName=s=>parse(s).toLocaleDateString('ar-u-nu-latn',{weekday:'long'});
+const sundayOf=s=>{const d=parse(s);d.setDate(d.getDate()-d.getDay());return ymd(d)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const clock=t=>new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const sidOf=(date,sec)=>`d${date.replace(/-/g,'')}s${sec}`;
+const dateOfSid=sid=>{const m=/^d(\d{4})(\d{2})(\d{2})s/.exec(sid);return `${m[1]}-${m[2]}-${m[3]}`};
+const rand=()=>{const a=new Uint8Array(6);crypto.getRandomValues(a);return [...a].map(x=>(x%36).toString(36)).join('')};
+const PERIOD=60; // seconds, fixed
+function themeLabel(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}catch(e){}return t==='light'?'الوضع: فاتح':t==='dark'?'الوضع: داكن':'الوضع: تلقائي'}
+function cycleTheme(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}catch(e){}const n=t==='auto'?'light':t==='light'?'dark':'auto';
+  try{localStorage.setItem('theme',n)}catch(e){}
+  if(n==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',n);
+  document.querySelectorAll('.theme').forEach(b=>b.textContent=themeLabel())}
+
+/* ---------- state ---------- */
+const STU=new Map();            // id -> {id,name,off,mam,oi,mi}
+const S={sessions:{},records:{}}; // sid -> {date,sec,status} / {draft,src,final,committedAt}
+let USER=null;
+let watched={sid:null,unsub:null,list:[]};
+const chains={},timers={};
+const V={tab:'rec',date:today(),sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offDate:today(),confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null};
+const hashM=/^#c-(d\d{8}s[12])-([a-z0-9]+)$/.exec(location.hash||'');
+const isStudent=!!hashM;
+const students=()=>[...STU.values()];
+const cur=()=>V.sid?{s:S.sessions[V.sid],r:S.records[V.sid]}:null;
+
+/* ---------- firestore wrappers ---------- */
+function queue(key,fn){chains[key]=(chains[key]||Promise.resolve()).then(fn).catch(e=>{console.error(e);toast('تعذّر الحفظ: تحقق من الاتصال والصلاحيات')});return chains[key]}
+const saveSession=sid=>queue('s'+sid,()=>{const s=S.sessions[sid];return setDoc(doc(db,'sessions',sid),{date:s.date,sec:s.sec,status:s.status,openedAt:s.openedAt||Date.now()})});
+const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid];return setDoc(doc(db,'records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},final:r.final||null,committedAt:r.committedAt||null})});
+const saveRecordSoon=sid=>{clearTimeout(timers[sid]);timers[sid]=setTimeout(()=>saveRecord(sid),500)};
+const saveStudent=s=>queue('t'+s.id,()=>setDoc(doc(db,'roster',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi}));
+async function loadAll(){
+  const [r,s,c]=await Promise.all([getDocs(collection(db,'roster')),getDocs(collection(db,'sessions')),getDocs(collection(db,'records'))]);
+  STU.clear();S.sessions={};S.records={};
+  r.forEach(d=>{const x=d.data();STU.set(+d.id,{id:+d.id,name:x.name,off:x.off,mam:x.mam,oi:x.oi||0,mi:x.mi||0})});
+  s.forEach(d=>{S.sessions[d.id]=d.data()});
+  c.forEach(d=>{S.records[d.id]=d.data()});
+  idxDirty=true;
+}
+function watchCheckins(sid){
+  if(watched.sid===sid)return;
+  if(watched.unsub)watched.unsub();
+  watched={sid,unsub:null,list:[]};
+  if(!sid)return;
+  watched.unsub=onSnapshot(query(collection(db,'checkins'),where('sid','==',sid)),q=>{
+    watched.list=q.docs.map(d=>{const x=d.data();return{id:+x.id,t:x.t&&x.t.toMillis?x.t.toMillis():Date.now()}});
+    if(!isStudent&&V.tab==='rec'&&cur()&&cur().s&&cur().s.status==='open')updateLive();
+  },e=>console.error(e));
+}
+
+/* ---------- attendance logic (weeks are derived from dates, Sunday-start) ---------- */
+let idxCache=null,idxDirty=true;
+function idx(){
+  if(!idxDirty&&idxCache)return idxCache;
+  const m=new Map();
+  for(const r of Object.values(S.records)){if(!r.final)continue;const b=sundayOf(r.date);if(!m.has(b))m.set(b,[]);m.get(b).push(r.final)}
+  idxCache=m;idxDirty=false;return m;
+}
+function status(b,id){const arr=idx().get(b);if(!arr)return;let res;for(const f of arr){if(id in f){if(f[id]==='P')return'P';res='A'}}return res}
+const doneBuckets=()=>[...idx().keys()].sort();
+function stat(id){let a=0,t=0;for(const b of idx().keys()){const st=status(b,id);if(st){t++;if(st==='A')a++}}return{a,t,pct:t?a/t*100:0}}
+function sessionRows(sec,draft){
+  const ids=new Set(students().filter(s=>s.mam===sec).map(s=>s.id));
+  Object.keys(draft||{}).forEach(k=>ids.add(+k));
+  return [...ids].map(i=>STU.get(i)).filter(Boolean).sort((a,b)=>(a.mam===sec?0:1)-(b.mam===sec?0:1)||a.mi-b.mi||a.id-b.id);
+}
+const isDirty=r=>!r.final||JSON.stringify(r.draft)!==JSON.stringify(r.final);
+const stateText=r=>!r.final?'مسودة: لم يُرحَّل الحضور إلى السجل بعد':isDirty(r)?'يوجد تعديلات غير مرحّلة':`تم الترحيل ${clock(r.committedAt)}`;
+
+/* ---------- session actions ---------- */
+let live={sid:null,tokens:[],cur:null,last:0,busy:false,qr:null,tick:null};
+async function ensureSession(status){
+  const sid=sidOf(V.date,V.sec);
+  if(S.sessions[sid]){V.sid=sid;V.q='';watchCheckins(sid);if(status==='open'&&S.sessions[sid].status!=='open'){return reopenQR()}return renderAll()}
+  S.sessions[sid]={date:V.date,sec:V.sec,status,openedAt:Date.now()};
+  const draft={};
+  if(status==='closed')students().filter(s=>s.mam===V.sec).forEach(s=>draft[s.id]='A');
+  S.records[sid]={date:V.date,sec:V.sec,draft,src:{},final:null,committedAt:null};
+  V.sid=sid;V.q='';watchCheckins(sid);renderAll();
+  await saveSession(sid);await saveRecord(sid);
+}
+async function closeQR(){
+  const {s,r}=cur();
+  if(!Object.keys(r.draft).length)students().filter(x=>x.mam===s.sec).forEach(x=>r.draft[x.id]='A');
+  watched.list.forEach(c=>{if(r.src[c.id]!=='m'){r.draft[c.id]='P';r.src[c.id]='qr'}});
+  s.status='closed';stopLive();renderAll();
+  await queue('tok'+V.sid,()=>setDoc(doc(db,'tokens',V.sid),{valid:[]}));
+  await saveSession(V.sid);await saveRecord(V.sid);
+}
+async function reopenQR(){const {s}=cur();s.status='open';renderAll();await saveSession(V.sid)}
+async function commit(){const {r}=cur();r.final={...r.draft};r.committedAt=Date.now();idxDirty=true;V.offDate=r.date;renderAll();toast('تم ترحيل الحضور');await saveRecord(V.sid)}
+async function removeSession(){
+  const sid=V.sid;stopLive();watchCheckins(null);
+  const list=await getDocs(query(collection(db,'checkins'),where('sid','==',sid))).catch(()=>({docs:[]}));
+  delete S.sessions[sid];delete S.records[sid];V.sid=null;V.confirmDel=false;idxDirty=true;renderAll();
+  try{await deleteDoc(doc(db,'sessions',sid));await deleteDoc(doc(db,'records',sid));await deleteDoc(doc(db,'tokens',sid)).catch(()=>{});
+    for(const d of list.docs)await deleteDoc(d.ref||doc(db,'checkins',d.id))}catch(e){toast('تعذّر حذف بعض البيانات')}
+}
+function setMark(id,absent){const {r}=cur();r.draft[id]=absent?'A':'P';r.src[id]='m';saveRecordSoon(V.sid)}
+function addVisitor(id){const {r}=cur();r.draft[id]='P';r.src[id]='m';V.addq='';saveRecordSoon(V.sid);renderAll()}
+
+/* ---------- live QR ---------- */
+async function rotate(){
+  if(live.busy)return;live.busy=true;
+  const t=rand();const next=[...live.tokens,t].slice(-3);
+  try{await setDoc(doc(db,'tokens',live.sid),{valid:next});live.tokens=next;live.cur=t;live.last=Date.now();drawQR()}
+  catch(e){console.error(e);toast('تعذّر تحديث الرمز')}
+  live.busy=false;
+}
+const baseUrl=()=>location.origin+location.pathname;
+function drawQR(){
+  const box=$('#qrbox');if(!box||!live.cur)return;
+  const url=baseUrl()+'#c-'+live.sid+'-'+live.cur;
+  if(typeof QRCode!=='undefined'){if(!live.qr||!box.firstChild){box.innerHTML='';live.qr=new QRCode(box,{text:url,width:280,height:280,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}else live.qr.makeCode(url)}
+  else box.innerHTML='<span class="small muted" dir="ltr" style="word-break:break-all">'+esc(url)+'</span>';
+}
+function startLive(){
+  stopLive();live={sid:V.sid,tokens:[],cur:null,last:0,busy:false,qr:null,tick:null};
+  rotate();
+  live.tick=setInterval(()=>{
+    if(!live.cur){return}
+    const left=Math.max(0,PERIOD-Math.floor((Date.now()-live.last)/1000));
+    const a=$('#tleft'),b=$('#tbar');if(a)a.textContent=left;if(b)b.style.width=(left/PERIOD*100)+'%';
+    if(Date.now()-live.last>=PERIOD*1000)rotate();
+  },1000);
+  updateLive();
+}
+function stopLive(){if(live.tick)clearInterval(live.tick);live={sid:null,tokens:[],cur:null,last:0,busy:false,qr:null,tick:null}}
+function updateLive(){
+  const f=$('#feed');if(!f)return;const c=cur();if(!c)return;
+  const list=[...watched.list].sort((a,b)=>b.t-a.t);$('#ccount').textContent=list.length;
+  f.innerHTML=list.slice(0,40).map(x=>{const s=STU.get(x.id);return `<li><span>${esc(s?s.name:x.id)} ${s&&s.mam!==c.s.sec?`<span class="pill warn">من مامو ${s.mam}</span>`:''}</span><span class="muted small">${clock(x.t)}</span></li>`}).join('')||'<li class="muted small">بانتظار أول تسجيل...</li>';
+}
+
+/* ---------- teacher views ---------- */
+function chipsHtml(){
+  const arr=Object.entries(S.sessions).sort((a,b)=>b[1].date.localeCompare(a[1].date)||a[1].sec-b[1].sec);
+  if(!arr.length)return'<span class="muted small">لا توجد جلسات بعد. اختر التاريخ والشعبة ثم ابدأ.</span>';
+  return arr.map(([sid,s])=>{const r=S.records[sid]||{};const cls=s.status==='open'?'open':r.final&&!isDirty(r)?'done':'draft';
+    return `<button class="chip" data-act="pick" data-sid="${sid}" aria-pressed="${V.sid===sid}"><i class="dot ${cls}"></i>${dayName(s.date)} ${fmtDate(s.date).slice(0,5)} · مامو ${s.sec}</button>`}).join('');
+}
+function pickerHtml(){
+  const sid=sidOf(V.date,V.sec),ex=S.sessions[sid];
+  return `<section class="card col">
+  <div class="row">
+    <div class="field"><label for="f-date">تاريخ المحاضرة</label><input id="f-date" type="date" value="${V.date}" data-f="date"></div>
+    <div class="field"><label>شعبة المامو (القاعة)</label><div class="seg" role="group"><button data-act="sec" data-v="1" aria-pressed="${V.sec===1}">1 · M4202</button><button data-act="sec" data-v="2" aria-pressed="${V.sec===2}">2 · M3306</button></div></div>
+    <button class="btn primary" data-act="startqr">${ex?'فتح الجلسة':'ابدأ بالرمز'}</button>
+    ${ex?'':'<button class="btn ghost" data-act="startman">تسجيل يدوي بدون رمز</button>'}
+  </div>
+  <div class="small muted">${dayName(V.date)} ${fmtDate(V.date)}. للأيام الماضية استخدم «تسجيل يدوي بدون رمز».</div>
+  <div class="chips">${chipsHtml()}</div></section>`;
+}
+function liveHtml(){
+  return `<section class="card live">
+   <div class="col" style="gap:10px">
+     <div class="qrbox" id="qrbox"><span class="muted small">جارٍ توليد الرمز...</span></div>
+     <div class="timer"><i id="tbar"></i></div>
+     <div class="small muted center">يتغيّر الرمز بعد <b id="tleft">--</b> ثانية</div>
+   </div>
+   <div class="col" style="gap:12px;min-width:0">
+     <div><div class="eyebrow">سجّلوا حضورهم بالرمز</div><div class="count" id="ccount">0</div></div>
+     <ul class="feed" id="feed"></ul>
+     <div class="row" style="margin-top:auto">
+       <button class="btn primary" data-act="close">إغلاق الرمز</button>
+       <button class="btn ghost" data-act="demo">تجربة: 20 تسجيل وهمي</button>
+     </div>
+     <div class="small muted">أبقِ هذه الصفحة مفتوحة وعلى الشاشة لأن الرمز يتجدد منها.</div>
+   </div></section>`;
+}
+function rowsHtml(s,r){
+  const q=V.q.trim();
+  return sessionRows(s.sec,r.draft).filter(x=>!q||x.name.includes(q)||String(x.id).includes(q)).map((x,i)=>{
+    const absent=r.draft[x.id]==='A';const st=stat(x.id);const src=r.src[x.id];
+    const vis=x.mam!==s.sec?`<span class="pill warn">من مامو ${x.mam}</span>`:'';
+    const sp=src==='qr'?'<span class="pill qr">رمز QR</span>':src==='m'?'<span class="pill">يدوي</span>':'';
+    return `<tr><td class="num hm">${i+1}</td><td class="num">${x.id}</td><td class="name">${esc(x.name)} ${vis}</td>
+     <td class="num"><label class="sw"><input type="checkbox" data-act="tg" data-id="${x.id}" ${absent?'checked':''} aria-label="غياب ${esc(x.name)}"><span></span></label></td>
+     <td class="hm">${sp}</td><td class="num hm">${st.a}</td><td class="num hm"><span class="pct ${st.pct>20?'hi':''}">${st.pct.toFixed(2)}</span></td></tr>`}).join('')||'<tr><td colspan="7" class="muted center">لا نتائج</td></tr>';
+}
+function counts(r){const v=Object.values(r.draft);const a=v.filter(x=>x==='A').length;return `حاضر ${v.length-a} · غائب ${a}`}
+function editHtml(){
+  const {s,r}=cur();const q=V.addq.trim();
+  const res=q?students().filter(x=>!(x.id in r.draft)&&(x.name.includes(q)||String(x.id).includes(q))).slice(0,8):[];
+  return `<section class="card col">
+   <div class="row" style="justify-content:space-between;align-items:center">
+     <div><h2>قائمة الطلاب · ${dayName(s.date)} ${fmtDate(s.date)} · مامو ${s.sec}</h2><div class="small muted">المفعّل (الأخضر) = غياب</div></div>
+     <div class="row" style="align-items:center"><span class="pill" id="cnt">${counts(r)}</span><button class="btn ghost" data-act="reopen">فتح الرمز</button></div>
+   </div>
+   <div class="row">
+     <div class="field" style="flex:1;min-width:180px"><label for="f-q">بحث في القائمة</label><input id="f-q" type="search" value="${esc(V.q)}" placeholder="الاسم أو الرقم الجامعي" data-f="q"></div>
+     <div class="field pop" style="flex:1;min-width:200px"><label for="f-add">إضافة طالب من شعبة أخرى كحاضر</label><input id="f-add" type="search" value="${esc(V.addq)}" placeholder="ابحث بالاسم أو الرقم" data-f="addq" autocomplete="off">
+       <div class="results" id="res" ${res.length?'':'hidden'}>${res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مامو ${x.mam}</span></button>`).join('')}</div></div>
+   </div>
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">المصدر</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة %</th></tr></thead><tbody id="rows">${rowsHtml(s,r)}</tbody></table></div>
+   <div class="row"><button class="btn danger" data-act="${V.confirmDel?'delok':'del'}">${V.confirmDel?'تأكيد حذف الجلسة نهائياً':'حذف الجلسة'}</button>${V.confirmDel?'<button class="btn ghost" data-act="delno">تراجع</button>':''}</div>
+  </section>
+  <div class="bar"><div class="in"><span class="small" id="cstate">${stateText(r)}</span><button class="btn primary" data-act="commit" id="cbtn" ${isDirty(r)?'':'disabled'}>${r.final?'ترحيل التعديلات':'ترحيل الحضور'}</button></div></div>`;
+}
+function refreshRows(){
+  const c=cur();if(!c||!c.r)return;const rows=$('#rows');if(rows)rows.innerHTML=rowsHtml(c.s,c.r);
+  const n=$('#cnt');if(n)n.textContent=counts(c.r);
+  const b=$('#cbtn');if(b){b.disabled=!isDirty(c.r);b.textContent=c.r.final?'ترحيل التعديلات':'ترحيل الحضور'}
+  const st=$('#cstate');if(st)st.textContent=stateText(c.r);
+}
+function officialHtml(){
+  const b=sundayOf(V.offDate);const done=doneBuckets();
+  const list=students().filter(s=>s.off===V.offSec).sort((a,c)=>a.oi-c.oi||a.id-c.id);
+  let n=0,missing=0;const abs=[];
+  const body=list.map(s=>{const st=status(b,s.id);const t=stat(s.id);
+    if(!st)missing++;if(st==='A')abs.push(s);
+    if(V.onlyAbs&&st!=='A')return'';n++;
+    const tag=s.mam!==s.off?`<span class="pill warn">مامو ${s.mam}</span>`:`<span class="pill">مامو ${s.mam}</span>`;
+    return `<tr><td class="num hm">${n}</td><td class="num">${s.id}</td><td class="name">${esc(s.name)}</td>
+    <td class="num"><label class="sw ro ${st?'':'na'}"><input type="checkbox" disabled ${st==='A'?'checked':''} aria-label="غياب ${esc(s.name)}"><span></span></label></td>
+    <td class="hm">${tag}</td><td class="num hm">${t.a}</td><td class="num hm"><span class="pct ${t.pct>20?'hi':''}">${t.pct.toFixed(2)}</span></td></tr>`}).join('')||'<tr><td colspan="7" class="muted center">لا نتائج</td></tr>';
+  const info=!done.includes(b)?`<div class="notice">لا توجد جلسة مرحّلة في هذا الأسبوع بعد.</div>`:missing?`<div class="notice">${missing} طالب بلا سجل لهذا الأسبوع: جلسة المامو الخاصة بهم لم تُرحَّل بعد.</div>`:'';
+  return `<section class="card col">
+   <div class="row">
+    <div class="field"><label>الشعبة الرسمية (النظام)</label><div class="seg"><button data-act="osec" data-v="1" aria-pressed="${V.offSec===1}">الشعبة 1 · ثلاثاء</button><button data-act="osec" data-v="2" aria-pressed="${V.offSec===2}">الشعبة 2 · خميس</button></div></div>
+    <div class="field"><label for="f-od">أي تاريخ من الأسبوع</label><input id="f-od" type="date" value="${V.offDate}" data-f="offDate"></div>
+    <button class="btn ghost" data-act="oprev">الأسبوع السابق</button><button class="btn ghost" data-act="onext">الأسبوع التالي</button>
+   </div>
+   <div class="row" style="align-items:center"><span class="pill">الأسبوع من ${fmtDate(b)} إلى ${fmtDate(addDays(b,6))}</span>
+    <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-oa" data-f="onlyAbs" ${V.onlyAbs?'checked':''}> الغائبون فقط</label>
+    <button class="btn primary" data-act="copyabs" style="margin-inline-start:auto">نسخ أرقام الغائبين (${abs.length})</button></div>
+   ${info}
+   ${V.copy?`<div class="field"><label>حدّد النص وانسخه</label><textarea class="copy" id="copybox" readonly>${esc(V.copy)}</textarea></div>`:''}
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">شعبة المامو</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة %</th></tr></thead><tbody>${body}</tbody></table></div>
+   <div class="small muted">الكشف يتبع الشعبة الرسمية في النظام. الطالب الذي حضر في أي قاعة خلال الأسبوع يُحسب حاضراً، والأسبوع يبدأ من الأحد.</div>
+  </section>`;
+}
+function manageHtml(){
+  const all=students();
+  if(!all.length)return `<section class="card col"><h2>لا توجد قوائم بعد</h2><p class="muted">استورد ملف القوائم (roster.json) مرة واحدة، أو أضف الطلاب يدوياً.</p>
+    <div class="row"><input type="file" id="f-imp" accept="application/json,.json" data-f="import"></div></section>`;
+  const q=V.mq.trim();
+  const list=all.filter(s=>(!q||s.name.includes(q)||String(s.id).includes(q))&&(!V.mdiff||s.off!==s.mam)).sort((a,b)=>a.off-b.off||a.oi-b.oi||a.id-b.id);
+  const c=(k,v)=>all.filter(s=>s[k]===v).length;const diff=all.filter(s=>s.off!==s.mam).length;
+  const sel=(f,id,v)=>`<select data-f="${f}" data-id="${id}" aria-label="${f==='moff'?'الشعبة الرسمية':'شعبة المامو'}"><option value="1" ${v===1?'selected':''}>1</option><option value="2" ${v===2?'selected':''}>2</option></select>`;
+  const rows=list.map((s,i)=>`<tr><td class="num hm">${i+1}</td><td class="num">${s.id}</td><td><input class="nm" type="text" value="${esc(s.name)}" data-f="mname" data-id="${s.id}"></td>
+    <td class="num">${sel('moff',s.id,s.off)}</td><td class="num">${sel('mmam',s.id,s.mam)}</td>
+    <td class="num">${V.mdel===s.id?`<button class="btn sm danger" data-act="mdelok" data-id="${s.id}">تأكيد</button>`:`<button class="btn sm ghost" data-act="mdel" data-id="${s.id}">حذف</button>`}</td></tr>`).join('')||'<tr><td colspan="6" class="muted center">لا نتائج</td></tr>';
+  return `<section class="card col">
+   <div class="row" style="justify-content:space-between;align-items:center"><h2>إدارة القوائم</h2>
+     <span class="small muted">رسمي 1: ${c('off',1)} · رسمي 2: ${c('off',2)} · مامو 1: ${c('mam',1)} · مامو 2: ${c('mam',2)} · مختلفون: ${diff}</span></div>
+   <div class="row">
+     <div class="field" style="flex:1;min-width:180px"><label for="f-mq">بحث</label><input id="f-mq" type="search" value="${esc(V.mq)}" data-f="mq" placeholder="الاسم أو الرقم الجامعي"></div>
+     <label class="small" style="display:flex;gap:6px;align-items:center;min-height:40px"><input type="checkbox" id="f-md" data-f="mdiff" ${V.mdiff?'checked':''}> المختلفون فقط</label>
+   </div>
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">الشعبة الرسمية</th><th class="num">شعبة المامو</th><th></th></tr></thead><tbody id="mrows">${rows}</tbody></table></div>
+   <h2 style="margin-top:6px">إضافة طالب</h2>
+   <div class="row">
+     <div class="field"><label for="n-id">الرقم الجامعي</label><input id="n-id" type="text" inputmode="numeric" dir="ltr" style="width:130px"></div>
+     <div class="field" style="flex:1;min-width:180px"><label for="n-name">الاسم</label><input id="n-name" type="text"></div>
+     <div class="field"><label for="n-off">رسمي</label><select id="n-off"><option>1</option><option>2</option></select></div>
+     <div class="field"><label for="n-mam">مامو</label><select id="n-mam"><option>1</option><option>2</option></select></div>
+     <button class="btn primary" data-act="madd">إضافة</button>
+   </div>
+   <div class="small muted">أي تعديل يُحفظ مباشرة. تغيير شعبة المامو يؤثر على الجلسات الجديدة فقط ولا يغيّر ما رُحّل سابقاً.</div>
+  </section>`;
+}
+function teacherHtml(){
+  let main='';const c=cur();
+  if(V.tab==='rec')main=pickerHtml()+(c&&c.s?(c.s.status==='open'?liveHtml():editHtml()):'');
+  else if(V.tab==='off')main=officialHtml();
+  else main=manageHtml();
+  return `<header class="top"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>حضور ${COURSE.name}</h1></div>
+   <div class="row" style="align-items:center"><button class="theme" data-act="theme">${themeLabel()}</button><button class="theme" data-act="logout">خروج</button></div></header>
+   <nav class="tabs" role="tablist"><button class="tab" role="tab" data-act="tab" data-v="rec" aria-selected="${V.tab==='rec'}">تسجيل الحضور</button><button class="tab" role="tab" data-act="tab" data-v="off" aria-selected="${V.tab==='off'}">كشف النظام الرسمي</button><button class="tab" role="tab" data-act="tab" data-v="man" aria-selected="${V.tab==='man'}">إدارة القوائم</button></nav>
+   ${main}`;
+}
+function renderAll(){
+  if(isStudent)return renderStudent();
+  const a=document.activeElement&&document.activeElement.id;
+  $('#app').innerHTML=teacherHtml();
+  if(a&&$('#'+a)&&$('#'+a).tagName!=='BUTTON'&&$('#'+a).type!=='file'){const e=$('#'+a);e.focus();try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}
+  const c=cur();const open=!!(c&&c.s&&c.s.status==='open');
+  if(live.sid&&(live.sid!==V.sid||!open))stopLive();
+  if(open&&live.sid!==V.sid)startLive();
+  else if(open&&V.tab==='rec'){live.qr=null;drawQR();updateLive()}
+}
+function renderLogin(msg){
+  $('#app').innerHTML=`<div class="stu"><div class="row" style="justify-content:flex-end"><button class="theme" data-act="theme">${themeLabel()}</button></div>
+  <div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>حضور ${COURSE.name}</h1></div>
+  <form class="card" id="login"><h2>دخول المدرّس</h2>
+   <div class="field"><label for="l-mail">البريد الإلكتروني</label><input id="l-mail" type="email" dir="ltr" autocomplete="username" required></div>
+   <div class="field"><label for="l-pass">كلمة المرور</label><input id="l-pass" type="password" dir="ltr" autocomplete="current-password" required></div>
+   ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="btn primary" type="submit">دخول</button></form></div>`;
+}
+
+/* ---------- student view ---------- */
+const ST={step:'load',msg:'',who:null,sess:null,loadedAt:Date.now()};
+async function initStudent(){
+  const sid=hashM[1];
+  try{const d=await getDoc(doc(db,'sessions',sid));ST.sess=d.exists()?d.data():null}catch(e){ST.sess=null}
+  if(!ST.sess)ST.step='bad',ST.msg='لم يتم العثور على هذه الجلسة. تأكد من مسح الرمز المعروض في القاعة.';
+  else if(ST.sess.status!=='open')ST.step='bad',ST.msg='تم إغلاق تسجيل الحضور لهذه المحاضرة. راجع المدرّس.';
+  else ST.step='id';
+  ST.loadedAt=Date.now();renderStudent();
+}
+function renderStudent(){
+  const s=ST.sess;
+  const head=`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${COURSE.name}</h1>${s?`<div class="small muted">${dayName(s.date)} ${fmtDate(s.date)}</div>`:''}</div><button class="theme" data-act="theme">${themeLabel()}</button></div>`;
+  let body='';
+  if(ST.step==='load')body='<p class="muted">جارٍ التحقق من الرمز...</p>';
+  else if(ST.step==='bad')body=`<div class="err">${esc(ST.msg)}</div>`;
+  else if(ST.step==='id')body=`<div class="field"><label for="sid-in">الرقم الجامعي</label><input class="id" id="sid-in" type="text" inputmode="numeric" autocomplete="off" placeholder="1xxxxx" maxlength="8"></div>${ST.msg?`<div class="err">${esc(ST.msg)}</div>`:''}<button class="btn primary" data-act="lookup">متابعة</button>`;
+  else if(ST.step==='confirm')body=`<div class="center"><div class="muted small">هل هذا أنت؟</div><h2 style="font-size:20px;margin-top:4px">${esc(ST.who.name)}</h2><div class="muted" dir="ltr">${ST.who.id}</div></div>${ST.msg?`<div class="err">${esc(ST.msg)}</div>`:''}<button class="btn primary" data-act="confirm">نعم، سجّل حضوري</button><button class="btn ghost" data-act="back">ليس أنا</button>`;
+  else if(ST.step==='done')body=`<div class="ok">✓</div><div class="center"><h2>تم تسجيل حضورك</h2><div class="muted small" style="margin-top:4px">${esc(ST.who.name)}</div></div>`;
+  $('#app').innerHTML=`<div class="stu">${head}<section class="card">${body}</section><p class="small muted center">الغياب يُحتسب حسب شعبتك الرسمية في النظام، وليس حسب القاعة.</p></div>`;
+  const i=$('#sid-in');if(i)i.focus();
+}
+async function stuLookup(){
+  const v=($('#sid-in').value||'').replace(/\D/g,'');
+  if(!v){ST.msg='اكتب رقمك الجامعي.';return renderStudent()}
+  try{const d=await getDoc(doc(db,'roster',v));
+    if(!d.exists()){ST.msg='هذا الرقم غير موجود في قائمة المساق.';return renderStudent()}
+    ST.who={id:v,name:d.data().name};ST.msg='';ST.step='confirm';renderStudent();
+  }catch(e){ST.msg='تعذّر الاتصال. حاول مرة أخرى.';renderStudent()}
+}
+async function stuConfirm(){
+  const sid=hashM[1],tok=hashM[2];
+  if(Date.now()-ST.loadedAt>5*60*1000){ST.step='bad';ST.msg='انتهت مهلة الصفحة. امسح الرمز مرة أخرى.';return renderStudent()}
+  const k='dev_'+sid;let prev=null;try{prev=localStorage.getItem(k)}catch(e){}
+  if(prev&&prev!==ST.who.id){ST.msg='سُجّل حضور طالب آخر من هذا الجهاز لهذه المحاضرة.';return renderStudent()}
+  try{
+    await setDoc(doc(db,'checkins',sid+'_'+ST.who.id),{sid,id:ST.who.id,t:serverTimestamp(),token:tok});
+    try{localStorage.setItem(k,ST.who.id)}catch(e){}
+    ST.step='done';renderStudent();
+  }catch(e){
+    let closed=false;try{const d=await getDoc(doc(db,'sessions',sid));closed=!d.exists()||d.data().status!=='open'}catch(_){}
+    ST.msg=closed?'تم إغلاق تسجيل الحضور لهذه المحاضرة.':'لم يُقبل التسجيل: إما انتهت صلاحية الرمز (امسح الرمز الحالي من الشاشة) أو أن هذا الرقم مسجّل مسبقاً.';
+    renderStudent();
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.tagName==='INPUT')return;const a=b.dataset.act;
+  switch(a){
+   case'theme':cycleTheme();break;
+   case'logout':stopLive();watchCheckins(null);await signOut(auth);break;
+   case'tab':V.tab=b.dataset.v;renderAll();break;
+   case'sec':V.sec=+b.dataset.v;renderAll();break;
+   case'osec':V.offSec=+b.dataset.v;renderAll();break;
+   case'startqr':ensureSession('open');break;
+   case'startman':ensureSession('closed');break;
+   case'pick':V.sid=b.dataset.sid;V.q='';V.confirmDel=false;{const s=S.sessions[V.sid];V.date=s.date;V.sec=s.sec}watchCheckins(V.sid);renderAll();break;
+   case'close':closeQR();break;
+   case'reopen':reopenQR();break;
+   case'commit':commit();break;
+   case'del':V.confirmDel=true;renderAll();break;
+   case'delno':V.confirmDel=false;renderAll();break;
+   case'delok':removeSession();break;
+   case'addv':addVisitor(+b.dataset.id);break;
+   case'demo':{const {s}=cur();const pool=students().filter(x=>x.mam===s.sec).sort(()=>Math.random()-.5).slice(0,20);
+     for(const x of pool)await setDoc(doc(db,'checkins',V.sid+'_'+x.id),{sid:V.sid,id:String(x.id),t:serverTimestamp(),token:live.cur||'demo'}).catch(()=>{});
+     toast('أُضيف 20 تسجيل تجريبي. احذف الجلسة بعد التجربة.');break}
+   case'oprev':V.offDate=addDays(sundayOf(V.offDate),-7);renderAll();break;
+   case'onext':V.offDate=addDays(sundayOf(V.offDate),7);renderAll();break;
+   case'copyabs':{const bk=sundayOf(V.offDate);const ids=students().filter(s=>s.off===V.offSec&&status(bk,s.id)==='A').sort((x,y)=>x.oi-y.oi).map(s=>s.id);
+     const txt=ids.join('\n');V.copy=null;
+     try{await navigator.clipboard.writeText(txt);toast(ids.length?`نُسخ ${ids.length} رقم`:'لا يوجد غائبون')}catch(_){V.copy=txt;renderAll();const t=$('#copybox');if(t){t.focus();t.select()}}break}
+   case'mdel':V.mdel=+b.dataset.id;renderAll();break;
+   case'mdelok':{const id=+b.dataset.id;STU.delete(id);V.mdel=null;renderAll();deleteDoc(doc(db,'roster',String(id))).catch(()=>toast('تعذّر الحذف'));break}
+   case'madd':{const id=+($('#n-id').value||'').replace(/\D/g,'');const name=$('#n-name').value.trim();
+     if(!id||!name)return toast('اكتب الرقم الجامعي والاسم');if(STU.has(id))return toast('هذا الرقم موجود مسبقاً');
+     const off=+$('#n-off').value,mam=+$('#n-mam').value;const all=students();
+     const s={id,name,off,mam,oi:Math.max(0,...all.filter(x=>x.off===off).map(x=>x.oi))+1,mi:Math.max(0,...all.filter(x=>x.mam===mam).map(x=>x.mi))+1};
+     STU.set(id,s);saveStudent(s);renderAll();toast('تمت الإضافة');break}
+   case'lookup':stuLookup();break;
+   case'back':ST.step='id';ST.msg='';renderStudent();break;
+   case'confirm':stuConfirm();break;
+  }
+});
+document.addEventListener('change',async e=>{
+  const t=e.target;
+  if(t.dataset.act==='tg'){setMark(+t.dataset.id,t.checked);refreshRows();return}
+  const f=t.dataset.f;if(!f)return;
+  if(f==='date'){V.date=t.value||today();renderAll()}
+  else if(f==='offDate'){V.offDate=t.value||today();renderAll()}
+  else if(f==='onlyAbs'){V.onlyAbs=t.checked;renderAll()}
+  else if(f==='mdiff'){V.mdiff=t.checked;renderAll()}
+  else if(f==='mname'){const s=STU.get(+t.dataset.id);s.name=t.value.trim()||s.name;saveStudent(s);toast('تم الحفظ')}
+  else if(f==='moff'||f==='mmam'){const s=STU.get(+t.dataset.id);const v=+t.value;const all=students();
+    if(f==='moff'){s.off=v;s.oi=Math.max(0,...all.filter(x=>x.off===v&&x!==s).map(x=>x.oi))+1}
+    else{s.mam=v;s.mi=Math.max(0,...all.filter(x=>x.mam===v&&x!==s).map(x=>x.mi))+1}
+    saveStudent(s);toast('تم نقل الطالب');renderAll()}
+  else if(f==='import'){const file=t.files[0];if(!file)return;
+    try{const arr=JSON.parse(await file.text());const batch=writeBatch(db);
+      arr.forEach(r=>{batch.set(doc(db,'roster',String(r[0])),{name:r[1],off:r[2],mam:r[3],oi:r[4],mi:r[5]});STU.set(r[0],{id:r[0],name:r[1],off:r[2],mam:r[3],oi:r[4],mi:r[5]})});
+      await batch.commit();toast(`تم استيراد ${arr.length} طالب`);renderAll()}catch(err){console.error(err);toast('تعذّر الاستيراد: تحقق من الملف والصلاحيات')}}
+});
+document.addEventListener('input',e=>{
+  const f=e.target.dataset.f;
+  if(f==='q'){V.q=e.target.value;refreshRows()}
+  else if(f==='mq'){V.mq=e.target.value;const m=$('#mrows');renderAll()}
+  else if(f==='addq'){V.addq=e.target.value;const c=cur();const q=V.addq.trim();const box=$('#res');
+    const res=q?students().filter(x=>!(x.id in c.r.draft)&&(x.name.includes(q)||String(x.id).includes(q))).slice(0,8):[];
+    box.hidden=!res.length;box.innerHTML=res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مامو ${x.mam}</span></button>`).join('')}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='sid-in')stuLookup()});
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='login')return;e.preventDefault();
+  try{await signInWithEmailAndPassword(auth,$('#l-mail').value.trim(),$('#l-pass').value)}
+  catch(err){renderLogin('تعذّر تسجيل الدخول. تحقق من البريد وكلمة المرور.')}
+});
+
+/* ---------- boot ---------- */
+if(!configured){
+  $('#app').innerHTML=`<div class="stu"><section class="card"><h2>الموقع غير مفعّل بعد</h2><p class="muted">افتح الملف <b dir="ltr">firebase-config.js</b> والصق فيه إعدادات مشروع Firebase حسب خطوات الشرح.</p></section></div>`;
+}else if(isStudent){renderStudent();initStudent()}
+else{
+  renderLogin();
+  onAuthStateChanged(auth,async u=>{
+    USER=u;
+    if(!u){stopLive();renderLogin();return}
+    $('#app').innerHTML='<div class="stu"><p class="muted center">جارٍ تحميل البيانات...</p></div>';
+    try{await loadAll();const d=doneBuckets();V.offDate=d.length?d[d.length-1]:today();renderAll()}
+    catch(e){console.error(e);$('#app').innerHTML='<div class="stu"><div class="err">تعذّر تحميل البيانات. تأكد أن قواعد Firestore منشورة وأن بريدك هو بريد المدرّس في القواعد.</div><button class="theme" data-act="logout">خروج</button></div>'}
+  });
+}
+</script>
+</body>
+</html>
