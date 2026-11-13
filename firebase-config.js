@@ -1,9 +1,17 @@
-// الصق هنا إعدادات مشروع Firebase (الخطوة 4 في الشرح) مكان القيم أدناه.
-export const firebaseConfig = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCYvQwyq66qvdREvj1tSBJrxYxwueNknzg",
+  authDomain: "mammoattendance.firebaseapp.com",
+  projectId: "mammoattendance",
+  storageBucket: "mammoattendance.firebasestorage.app",
+  messagingSenderId: "297059900867",
+  appId: "1:297059900867:web:7e955a456099b7dded7176"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
