@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // المالك (يطابق ownerEmail في firebase-config.js)
+    function isOwner() {
+      return request.auth != null && request.auth.token.email == 'yhijazi40@gmail.com';
+    }
+
+    // المالك أو أي مشرف أضافه المالك من تبويب «المشرفون»
+    function teacher() {
+      return isOwner() || (request.auth != null &&
+        request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails);
+    }
+
+    match /config/{docId} {
+      allow read: if teacher();
+      allow write: if isOwner();
+    }
+
+    // كل مساق وثيقة مستقلة مع قوائمه وجلساته
+    match /courses/{cid} {
+      allow read, write: if teacher();
+
+      // الطالب يقرأ سجلاً واحداً إذا عرف رقمه فقط، والمشرفون وحدهم يرون القائمة كاملة
+      match /students/{id} {
+        allow get: if true;
+        allow list, write: if teacher();
+      }
+
+      // حالة الجلسة (مفتوحة/مغلقة) تُقرأ علناً ولا يعدّلها إلا المشرفون
+      match /sessions/{sid} {
+        allow read: if true;
+        allow write: if teacher();
+      }
+
+      match /records/{sid} { allow read, write: if teacher(); }
+      match /tokens/{sid}  { allow read, write: if teacher(); }
+
+      // تسجيل الطالب: مرة واحدة فقط، الجلسة مفتوحة، الرقم بالقائمة، الرمز صالح
+      match /checkins/{x} {
+        allow read, delete: if teacher();
+        allow create: if teacher() || (
+          request.resource.data.keys().hasOnly(['sid', 'id', 't', 'token']) &&
+          request.resource.data.id is string &&
+          request.resource.data.sid is string &&
+          x == request.resource.data.sid + '_' + request.resource.data.id &&
+          request.resource.data.t == request.time &&
+          get(/databases/$(database)/documents/courses/$(cid)/sessions/$(request.resource.data.sid)).data.status == 'open' &&
+          exists(/databases/$(database)/documents/courses/$(cid)/students/$(request.resource.data.id)) &&
+          request.resource.data.token in get(/databases/$(database)/documents/courses/$(cid)/tokens/$(request.resource.data.sid)).data.valid
+        );
+      }
+    }
+
+    // بيانات النسخة السابقة (للنقل فقط)
+    match /roster/{id}   { allow read, write: if teacher(); }
+    match /sessions/{id} { allow read, write: if teacher(); }
+    match /records/{id}  { allow read, write: if teacher(); }
+    match /tokens/{id}   { allow read, write: if teacher(); }
+    match /checkins/{id} { allow read, write: if teacher(); }
+  }
+}

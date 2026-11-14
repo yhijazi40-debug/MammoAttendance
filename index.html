@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>حضور مساق تصوير الثدي بالأشعة</title>
+<title>نظام حضور المساقات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <style>
-/* Layout: lecturer console (3 tabs) + a single centred card for students. Colours follow the university system teal. */
+/* Layout: lecturer console with a course selector and tabs; student view is a single centred card. */
 :root{
   --bg:#eef3f6; --surface:#ffffff; --tint:#e6eff4; --ink:#13232d; --muted:#5a6f7d; --line:#d3dee5;
   --accent:#0e8797; --accent-ink:#ffffff; --accent-soft:#d9eef2;
@@ -26,7 +26,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;
   padding-block:20px 90px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 h1{font-size:22px;margin:0;font-weight:700;text-wrap:balance}
 h2{font-size:16px;margin:0;font-weight:600}
 .eyebrow{font-size:12px;letter-spacing:.04em;color:var(--muted)}
@@ -42,10 +42,6 @@ h2{font-size:16px;margin:0;font-weight:600}
 .field label{font-size:12px;color:var(--muted)}
 select,input[type=text],input[type=date],input[type=search],input[type=number],input[type=email],input[type=password]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-height:40px;max-width:100%}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
-.seg button{font:inherit;background:var(--surface);color:var(--ink);border:0;padding:8px 16px;min-height:40px;cursor:pointer}
-.seg button+button{border-right:1px solid var(--line)}
-.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:8px 16px;min-height:40px;cursor:pointer}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
@@ -78,8 +74,8 @@ tbody tr{background:var(--tint)} tbody tr:nth-child(even){background:var(--surfa
 tbody tr:last-child td{border-bottom:0}
 td.num,th.num{font-variant-numeric:tabular-nums;text-align:center}
 td.name{min-width:170px}
-td input.nm{width:100%;min-width:160px}
-td select{min-height:34px;padding:4px 8px}
+td input.nm{width:100%;min-width:140px}
+td input,td select{min-height:34px;padding:4px 8px}
 @media (max-width:560px){.hm{display:none}}
 .sw{position:relative;display:inline-block;width:46px;height:26px}
 .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%;z-index:1}
@@ -93,11 +89,11 @@ td select{min-height:34px;padding:4px 8px}
 .pct.hi{color:var(--bad);font-weight:600}
 .bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);
   padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));z-index:5}
-.bar .in{max-width:980px;margin:0 auto;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.bar .in{max-width:1000px;margin:0 auto;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
 .pop{position:relative}
 .results{position:absolute;top:100%;right:0;left:0;z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:8px;max-height:240px;overflow:auto;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
-.results button{display:flex;width:100%;justify-content:space-between;gap:8px;font:inherit;color:var(--ink);background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer;text-align:right}
-.results button:hover{background:var(--tint)}
+.results button,.pick{display:flex;width:100%;justify-content:space-between;gap:8px;font:inherit;color:var(--ink);background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer;text-align:right}
+.results button:hover,.pick:hover{background:var(--tint)}
 #toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:90vw}
 [hidden]{display:none!important}
 textarea.copy{width:100%;min-height:110px;font:13px monospace;direction:ltr;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:8px}
@@ -110,12 +106,14 @@ textarea.copy{width:100%;min-height:110px;font:13px monospace;direction:ltr;back
 .center{text-align:center}
 .theme{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
 .weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px}
-.wk{font:inherit;display:flex;flex-direction:column;align-items:center;gap:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 2px;cursor:pointer;font-size:12px;line-height:1.35;position:relative}
+.wk{font:inherit;display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 2px;cursor:pointer;font-size:12px;line-height:1.35;position:relative}
 .wk b{font-size:15px;font-variant-numeric:tabular-nums}
 .wk.past{background:var(--tint)} .wk.cur{border:2px solid var(--accent);background:var(--accent-soft)}
 .wk.ex::after{content:"";position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:var(--warn)}
-.wk.rec span.ck{color:var(--on);font-weight:700}
+.wk .ck{color:var(--on);font-weight:700}
 .legend{display:flex;gap:14px;flex-wrap:wrap}
+.tool{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.sub{border-top:1px solid var(--line);padding-top:14px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -132,12 +130,6 @@ import {getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,query,where,
 
 const firebaseConfig=CFG.firebaseConfig;
 const OWNER=String(CFG.ownerEmail||'').toLowerCase();
-const COURSE={code:'شع331',name:'تصوير الثدي بالأشعة',term:'الفصل الأول 2026-2027'};
-const TITLE='حضور مساق '+COURSE.name;
-const ROOMS={1:'M4202',2:'LAB'};
-/* التقويم الجامعي 2026-2027 (الفصل الأول): بدء التدريس الأحد 11/10، 15 أسبوع محاضرات، 17 أسبوعاً مع النهائيات */
-const TERM_START='2026-10-11',LECT_WEEKS=15,TOTAL_WEEKS=17,ABS_LIMIT=0.2;
-const EXAMS=[['2026-11-07','2026-11-21','الامتحان الأول'],['2026-11-29','2026-12-10','الامتحان النصفي'],['2026-12-12','2026-12-26','الامتحان الثاني'],['2027-01-16','2027-01-21','النهائي العملي'],['2027-01-23','2027-02-06','النهائي النظري']];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const configured=!!(firebaseConfig&&firebaseConfig.apiKey&&!String(firebaseConfig.apiKey).startsWith('PASTE'));
@@ -145,71 +137,103 @@ let auth=null,db=null;
 if(configured){const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app)}
 
 /* ---------- helpers ---------- */
-function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2800)}
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3200)}
 const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const today=()=>ymd(new Date());
 const fmtDate=s=>{if(!s)return'';const [y,m,d]=s.split('-');return `${d}/${m}/${y}`};
-const dayName=s=>parse(s).toLocaleDateString('ar-u-nu-latn',{weekday:'long'});
+const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const dayName=s=>DAYS[parse(s).getDay()];
 const sundayOf=s=>{const d=parse(s);d.setDate(d.getDate()-d.getDay());return ymd(d)};
 const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const dayDiff=(a,b)=>Math.round((parse(a)-parse(b))/86400000);
 const clock=t=>new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 const sidOf=(date,sec)=>`d${date.replace(/-/g,'')}s${sec}`;
-const dateOfSid=sid=>{const m=/^d(\d{4})(\d{2})(\d{2})s/.exec(sid);return `${m[1]}-${m[2]}-${m[3]}`};
 const rand=()=>{const a=new Uint8Array(6);crypto.getRandomValues(a);return [...a].map(x=>(x%36).toString(36)).join('')};
-const PERIOD=60; // seconds, fixed
-const dayDiff=(a,b)=>Math.round((parse(a)-parse(b))/86400000);
-const weekNo=d=>Math.floor(dayDiff(d,TERM_START)/7)+1;
-const weekStart=n=>addDays(TERM_START,(n-1)*7);
-const examOf=n=>{const s=weekStart(n),e=addDays(s,6);const x=EXAMS.find(x=>x[0]<=e&&x[1]>=s);return x?x[2]:''};
-function termStats(){const t=today();const w=weekNo(t);let E=0;for(let k=1;k<=LECT_WEEKS;k++)if(addDays(weekStart(k),6)<=t)E++;
-  const cur=(w>=1&&w<=LECT_WEEKS&&E<w)?w:null;return{w,E,cur,R:Math.max(0,LECT_WEEKS-E-(cur?1:0))}}
+const PERIOD=60;
 function themeLabel(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}catch(e){}return t==='light'?'الوضع: فاتح':t==='dark'?'الوضع: داكن':'الوضع: تلقائي'}
 function cycleTheme(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}catch(e){}const n=t==='auto'?'light':t==='light'?'dark':'auto';
   try{localStorage.setItem('theme',n)}catch(e){}
   if(n==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',n);
-  document.querySelectorAll('.theme').forEach(b=>b.textContent=themeLabel())}
+  document.querySelectorAll('.theme[data-act=theme]').forEach(b=>b.textContent=themeLabel())}
+const dayFromTxt=t=>{t=String(t||'').trim();const m={'حد':0,'احد':0,'أحد':0,'الأحد':0,'ن':1,'اثنين':1,'إثنين':1,'الاثنين':1,'الإثنين':1,'ثل':2,'ث':2,'ثلاثاء':2,'الثلاثاء':2,'ر':3,'اربعاء':3,'أربعاء':3,'الأربعاء':3,'خ':4,'خميس':4,'الخميس':4};return m[t]!=null?m[t]:null};
+const emptyCourse=()=>({code:'',name:'',term:'الفصل الأول 2026-2027',termStart:'2026-10-11',lectureWeeks:15,totalWeeks:17,absLimit:20,off:[{n:1,day:2},{n:2,day:4}],mam:[{n:1,room:'',day:2},{n:2,room:'',day:4}],exams:[]});
 
 /* ---------- state ---------- */
-const STU=new Map();            // id -> {id,name,off,mam,oi,mi}
-const S={sessions:{},records:{}}; // sid -> {date,sec,status} / {draft,src,final,committedAt}
-let USER=null,IS_OWNER=false,ADMINS=[];
+const COURSES=new Map();           // id -> course
+let CC=null;                       // current course
+const STU=new Map();               // id -> {id,name,off,mam,oi,mi}
+const S={sessions:{},records:{}};
+let USER=null,IS_OWNER=false,ADMINS=[],LEGACY=false;
 let watched={sid:null,unsub:null,list:[]};
 const chains={},timers={};
-const V={adm:'',tab:'rec',date:today(),sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offDate:today(),confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null};
-const hashM=/^#c-(d\d{8}s[12])-([a-z0-9]+)$/.exec(location.hash||'');
+const V={tab:'rec',cid:null,date:today(),custom:false,sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offWeek:1,confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null,lq:'',lid:null,cf:null,cdel:null};
+const hashM=/^#c-([a-z0-9]+)-(d\d{8}s\d+)-([a-z0-9]+)$/.exec(location.hash||'');
 const isStudent=!!hashM;
 const students=()=>[...STU.values()];
 const cur=()=>V.sid?{s:S.sessions[V.sid],r:S.records[V.sid]}:null;
+const room=n=>{const m=CC&&CC.mam.find(x=>x.n===n);return m&&m.room?m.room:''};
+const mamLabel=n=>room(n)?`${n} · ${room(n)}`:String(n);
+const offLabel=n=>{const o=CC&&CC.off.find(x=>x.n===n);return o&&o.day!=null?`${n} · ${DAYS[o.day]}`:String(n)};
 
-/* ---------- firestore wrappers ---------- */
+/* ---------- term/calendar ---------- */
+const weekNo=d=>Math.floor(dayDiff(d,CC.termStart)/7)+1;
+const weekStart=n=>addDays(CC.termStart,(n-1)*7);
+const examOf=n=>{const s=weekStart(n),e=addDays(s,6);const x=(CC.exams||[]).find(x=>x.from<=e&&x.to>=s);return x?x.label:''};
+function termStats(){const t=today();const w=weekNo(t);let E=0;for(let k=1;k<=CC.lectureWeeks;k++)if(addDays(weekStart(k),6)<=t)E++;
+  const c=(w>=1&&w<=CC.lectureWeeks&&E<w)?w:null;return{w,E,cur:c,R:Math.max(0,CC.lectureWeeks-E-(c?1:0))}}
+function lectureDates(sec){const m=CC.mam.find(x=>x.n===sec);const off=m&&m.day!=null?m.day:0;return Array.from({length:CC.lectureWeeks},(_,i)=>addDays(weekStart(i+1),off))}
+function defaultDate(sec){const l=lectureDates(sec),t=today();let d=l[0];for(const x of l)if(x<=t)d=x;return d}
+
+/* ---------- firestore paths ---------- */
+const cref=(...p)=>doc(db,'courses',CC.id,...p);
+const ccol=n=>collection(db,'courses',CC.id,n);
 function queue(key,fn){chains[key]=(chains[key]||Promise.resolve()).then(fn).catch(e=>{console.error(e);toast('تعذّر الحفظ: تحقق من الاتصال والصلاحيات')});return chains[key]}
-const saveSession=sid=>queue('s'+sid,()=>{const s=S.sessions[sid];return setDoc(doc(db,'sessions',sid),{date:s.date,sec:s.sec,status:s.status,openedAt:s.openedAt||Date.now()})});
-const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid];return setDoc(doc(db,'records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},times:r.times||{},final:r.final||null,committedAt:r.committedAt||null})});
+const saveSession=sid=>queue('s'+sid,()=>{const s=S.sessions[sid];return setDoc(cref('sessions',sid),{date:s.date,sec:s.sec,status:s.status,openedAt:s.openedAt||Date.now(),courseName:CC.name,courseCode:CC.code,room:room(s.sec)})});
+const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid];return setDoc(cref('records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},times:r.times||{},final:r.final||null,committedAt:r.committedAt||null})});
 const saveRecordSoon=sid=>{clearTimeout(timers[sid]);timers[sid]=setTimeout(()=>saveRecord(sid),500)};
-const saveStudent=s=>queue('t'+s.id,()=>setDoc(doc(db,'roster',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi}));
+const saveStudent=s=>queue('t'+s.id,()=>setDoc(cref('students',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi}));
+const courseData=c=>({code:c.code,name:c.name,term:c.term,termStart:c.termStart,lectureWeeks:c.lectureWeeks,totalWeeks:c.totalWeeks,absLimit:c.absLimit,off:c.off,mam:c.mam,exams:c.exams||[]});
+const saveCourse=c=>queue('c'+c.id,()=>setDoc(doc(db,'courses',c.id),courseData(c)));
 async function loadAll(){
-  const [r,s,c]=await Promise.all([getDocs(collection(db,'roster')),getDocs(collection(db,'sessions')),getDocs(collection(db,'records'))]);
-  STU.clear();S.sessions={};S.records={};
+  const cs=await getDocs(collection(db,'courses'));COURSES.clear();
+  cs.forEach(d=>COURSES.set(d.id,{id:d.id,...d.data()}));
+  try{const a=await getDoc(doc(db,'config','admins'));ADMINS=a.exists()?(a.data().emails||[]):[]}catch(e){ADMINS=[]}
+  try{const l=await getDocs(collection(db,'roster'));LEGACY=l.size>0}catch(e){LEGACY=false}
+  let id=V.cid;try{id=id||localStorage.getItem('cid')}catch(e){}
+  if(!COURSES.has(id))id=COURSES.size?[...COURSES.keys()][0]:null;
+  await selectCourse(id);
+}
+async function selectCourse(id){
+  stopLive();watchCheckins(null);
+  V.cid=id;V.sid=null;V.q='';V.lid=null;V.lq='';idxDirty=true;
+  STU.clear();S.sessions={};S.records={};CC=id?COURSES.get(id):null;
+  if(!CC)return;
+  try{localStorage.setItem('cid',id)}catch(e){}
+  const [r,s,c]=await Promise.all([getDocs(ccol('students')),getDocs(ccol('sessions')),getDocs(ccol('records'))]);
   r.forEach(d=>{const x=d.data();STU.set(+d.id,{id:+d.id,name:x.name,off:x.off,mam:x.mam,oi:x.oi||0,mi:x.mi||0})});
   s.forEach(d=>{S.sessions[d.id]=d.data()});
   c.forEach(d=>{S.records[d.id]=d.data()});
+  V.sec=CC.mam.length?CC.mam[0].n:1;V.offSec=CC.off.length?CC.off[0].n:1;V.custom=false;
+  V.date=defaultDate(V.sec);
+  const d=doneBuckets();V.offWeek=d.length?weekNo(d[d.length-1]):Math.max(1,Math.min(CC.lectureWeeks,weekNo(today())));
   idxDirty=true;
-  try{const a=await getDoc(doc(db,'config','admins'));ADMINS=a.exists()?(a.data().emails||[]):[]}catch(e){ADMINS=[]}
 }
 function watchCheckins(sid){
   if(watched.sid===sid)return;
   if(watched.unsub)watched.unsub();
   watched={sid,unsub:null,list:[]};
   if(!sid)return;
-  watched.unsub=onSnapshot(query(collection(db,'checkins'),where('sid','==',sid)),q=>{
+  watched.unsub=onSnapshot(query(ccol('checkins'),where('sid','==',sid)),q=>{
     watched.list=q.docs.map(d=>{const x=d.data();return{id:+x.id,t:x.t&&x.t.toMillis?x.t.toMillis():Date.now()}});
     if(!isStudent&&V.tab==='rec'&&cur()&&cur().s&&cur().s.status==='open')updateLive();
   },e=>console.error(e));
 }
+async function wipe(...path){const q=await getDocs(collection(db,...path));let b=writeBatch(db),n=0;
+  for(const d of q.docs){b.delete(d.ref||doc(db,...path,d.id));if(++n%400===0){await b.commit();b=writeBatch(db)}}await b.commit()}
 
-/* ---------- attendance logic (weeks are derived from dates, Sunday-start) ---------- */
+/* ---------- attendance logic ---------- */
 let idxCache=null,idxDirty=true;
 function idx(){
   if(!idxDirty&&idxCache)return idxCache;
@@ -219,7 +243,7 @@ function idx(){
 }
 function status(b,id){const arr=idx().get(b);if(!arr)return;let res;for(const f of arr){if(id in f){if(f[id]==='P')return'P';res='A'}}return res}
 const doneBuckets=()=>[...idx().keys()].sort();
-function stat(id){let a=0,t=0;for(const b of idx().keys()){const st=status(b,id);if(st){t++;if(st==='A')a++}}return{a,t,pct:a/LECT_WEEKS*100}}
+function stat(id){let a=0,t=0;for(const b of idx().keys()){const st=status(b,id);if(st){t++;if(st==='A')a++}}return{a,t,pct:a/CC.lectureWeeks*100}}
 function sessionRows(sec,draft){
   const ids=new Set(students().filter(s=>s.mam===sec).map(s=>s.id));
   Object.keys(draft||{}).forEach(k=>ids.add(+k));
@@ -227,6 +251,7 @@ function sessionRows(sec,draft){
 }
 const isDirty=r=>!r.final||JSON.stringify(r.draft)!==JSON.stringify(r.final);
 const stateText=r=>!r.final?'مسودة: لم يُرحَّل الحضور إلى السجل بعد':isDirty(r)?'يوجد تعديلات غير مرحّلة':`تم الترحيل ${clock(r.committedAt)}`;
+const srcTxt=s=>s==='qr'?'رمز QR':s==='m'?'يدوي':'';
 
 /* ---------- session actions ---------- */
 let live={sid:null,tokens:[],cur:null,last:0,busy:false,qr:null,tick:null};
@@ -246,17 +271,17 @@ async function closeQR(){
   r.times=r.times||{};
   watched.list.forEach(c=>{r.times[c.id]=c.t;if(r.src[c.id]!=='m'){r.draft[c.id]='P';r.src[c.id]='qr'}});
   s.status='closed';stopLive();renderAll();
-  await queue('tok'+V.sid,()=>setDoc(doc(db,'tokens',V.sid),{valid:[]}));
+  await queue('tok'+V.sid,()=>setDoc(cref('tokens',V.sid),{valid:[]}));
   await saveSession(V.sid);await saveRecord(V.sid);
 }
 async function reopenQR(){const {s}=cur();s.status='open';renderAll();await saveSession(V.sid)}
-async function commit(){const {r}=cur();r.final={...r.draft};r.committedAt=Date.now();idxDirty=true;V.offDate=r.date;renderAll();toast('تم ترحيل الحضور');await saveRecord(V.sid)}
+async function commit(){const {r}=cur();r.final={...r.draft};r.committedAt=Date.now();idxDirty=true;V.offWeek=Math.min(Math.max(1,weekNo(r.date)),CC.lectureWeeks);renderAll();toast('تم ترحيل الحضور');await saveRecord(V.sid)}
 async function removeSession(){
   const sid=V.sid;stopLive();watchCheckins(null);
-  const list=await getDocs(query(collection(db,'checkins'),where('sid','==',sid))).catch(()=>({docs:[]}));
+  const list=await getDocs(query(ccol('checkins'),where('sid','==',sid))).catch(()=>({docs:[]}));
   delete S.sessions[sid];delete S.records[sid];V.sid=null;V.confirmDel=false;idxDirty=true;renderAll();
-  try{await deleteDoc(doc(db,'sessions',sid));await deleteDoc(doc(db,'records',sid));await deleteDoc(doc(db,'tokens',sid)).catch(()=>{});
-    for(const d of list.docs)await deleteDoc(d.ref||doc(db,'checkins',d.id))}catch(e){toast('تعذّر حذف بعض البيانات')}
+  try{await deleteDoc(cref('sessions',sid));await deleteDoc(cref('records',sid));await deleteDoc(cref('tokens',sid)).catch(()=>{});
+    for(const d of list.docs)await deleteDoc(d.ref||cref('checkins',d.id))}catch(e){toast('تعذّر حذف بعض البيانات')}
 }
 function setMark(id,absent){const {r}=cur();r.draft[id]=absent?'A':'P';r.src[id]='m';saveRecordSoon(V.sid)}
 function addVisitor(id){const {r}=cur();r.draft[id]='P';r.src[id]='m';V.addq='';saveRecordSoon(V.sid);renderAll()}
@@ -265,22 +290,22 @@ function addVisitor(id){const {r}=cur();r.draft[id]='P';r.src[id]='m';V.addq='';
 async function rotate(){
   if(live.busy)return;live.busy=true;
   const t=rand();const next=[...live.tokens,t].slice(-3);
-  try{await setDoc(doc(db,'tokens',live.sid),{valid:next});live.tokens=next;live.cur=t;live.last=Date.now();drawQR()}
+  try{await setDoc(cref('tokens',live.sid),{valid:next});live.tokens=next;live.cur=t;live.last=Date.now();drawQR()}
   catch(e){console.error(e);toast('تعذّر تحديث الرمز')}
   live.busy=false;
 }
 const baseUrl=()=>location.origin+location.pathname;
 function drawQR(){
   const box=$('#qrbox');if(!box||!live.cur)return;
-  const url=baseUrl()+'#c-'+live.sid+'-'+live.cur;
-  if(typeof QRCode!=='undefined'){if(!live.qr||!box.firstChild){box.innerHTML='';live.qr=new QRCode(box,{text:url,width:280,height:280,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}else live.qr.makeCode(url)}
+  const url=baseUrl()+'#c-'+CC.id+'-'+live.sid+'-'+live.cur;
+  if(typeof QRCode!=='undefined'){if(!live.qr||!box.firstChild||box.firstChild.tagName==='SPAN'){box.innerHTML='';live.qr=new QRCode(box,{text:url,width:280,height:280,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}else live.qr.makeCode(url)}
   else box.innerHTML='<span class="small muted" dir="ltr" style="word-break:break-all">'+esc(url)+'</span>';
 }
 function startLive(){
   stopLive();live={sid:V.sid,tokens:[],cur:null,last:0,busy:false,qr:null,tick:null};
   rotate();
   live.tick=setInterval(()=>{
-    if(!live.cur){return}
+    if(!live.cur)return;
     const left=Math.max(0,PERIOD-Math.floor((Date.now()-live.last)/1000));
     const a=$('#tleft'),b=$('#tbar');if(a)a.textContent=left;if(b)b.style.width=(left/PERIOD*100)+'%';
     if(Date.now()-live.last>=PERIOD*1000)rotate();
@@ -291,38 +316,42 @@ function stopLive(){if(live.tick)clearInterval(live.tick);live={sid:null,tokens:
 function updateLive(){
   const f=$('#feed');if(!f)return;const c=cur();if(!c)return;
   const list=[...watched.list].sort((a,b)=>b.t-a.t);$('#ccount').textContent=list.length;
-  f.innerHTML=list.slice(0,40).map(x=>{const s=STU.get(x.id);return `<li><span>${esc(s?s.name:x.id)} ${s&&s.mam!==c.s.sec?`<span class="pill warn">من مامو ${s.mam}</span>`:''}</span><span class="muted small">${clock(x.t)}</span></li>`}).join('')||'<li class="muted small">بانتظار أول تسجيل...</li>';
+  f.innerHTML=list.slice(0,40).map(x=>{const s=STU.get(x.id);return `<li><span>${esc(s?s.name:x.id)} ${s&&s.mam!==c.s.sec?`<span class="pill warn">من مجموعة ${s.mam}</span>`:''}</span><span class="muted small">${clock(x.t)}</span></li>`}).join('')||'<li class="muted small">بانتظار أول تسجيل...</li>';
 }
 
-/* ---------- teacher views ---------- */
+/* ---------- views: recording ---------- */
 function chipsHtml(){
   const arr=Object.entries(S.sessions).sort((a,b)=>b[1].date.localeCompare(a[1].date)||a[1].sec-b[1].sec);
-  if(!arr.length)return'<span class="muted small">لا توجد جلسات بعد. اختر التاريخ والشعبة ثم ابدأ.</span>';
+  if(!arr.length)return'<span class="muted small">لا توجد جلسات بعد لهذا المساق.</span>';
   return arr.map(([sid,s])=>{const r=S.records[sid]||{};const cls=s.status==='open'?'open':r.final&&!isDirty(r)?'done':'draft';
-    return `<button class="chip" data-act="pick" data-sid="${sid}" aria-pressed="${V.sid===sid}"><i class="dot ${cls}"></i>${dayName(s.date)} ${fmtDate(s.date).slice(0,5)} · مامو ${s.sec} · أ${weekNo(s.date)}</button>`}).join('');
+    return `<button class="chip" data-act="pick" data-sid="${sid}" aria-pressed="${V.sid===sid}"><i class="dot ${cls}"></i>${dayName(s.date)} ${fmtDate(s.date).slice(0,5)} · ${mamLabel(s.sec)} · أ${weekNo(s.date)}</button>`}).join('');
 }
 function termHtml(){
   const ts=termStats();const done=new Set(doneBuckets());
-  const cells=Array.from({length:LECT_WEEKS},(_,i)=>i+1).map(k=>{const st=weekStart(k);const ex=examOf(k);const past=addDays(st,6)<=today();
+  const cells=Array.from({length:CC.lectureWeeks},(_,i)=>i+1).map(k=>{const st=weekStart(k);const ex=examOf(k);const past=addDays(st,6)<=today();
     const has=Object.values(S.sessions).some(s=>weekNo(s.date)===k);
     const cls=['wk',past?'past':'',ts.cur===k?'cur':'',ex?'ex':''].join(' ');
     return `<button class="${cls}" data-act="wk" data-w="${k}" title="${ex?ex+' · ':''}${fmtDate(st)}"><b>${k}</b><span>${fmtDate(st).slice(0,5)}</span><span class="ck">${done.has(st)?'✓':has?'•':'&nbsp;'}</span></button>`}).join('');
-  const lim=Math.floor(LECT_WEEKS*ABS_LIMIT);
+  const lim=Math.floor(CC.lectureWeeks*CC.absLimit/100);
   return `<section class="card col"><div class="row" style="justify-content:space-between;align-items:center"><h2>الفصل الدراسي</h2>
-   <span class="small muted">${ts.w>=1&&ts.w<=TOTAL_WEEKS?'اليوم في الأسبوع '+ts.w:ts.w<1?'لم يبدأ التدريس':'انتهت أسابيع الفصل'} · مضى ${ts.E} من ${LECT_WEEKS}${ts.cur?' · الحالي '+ts.cur:''} · المتبقي ${ts.R}</span></div>
+   <span class="small muted">${ts.w>=1&&ts.w<=CC.totalWeeks?'اليوم في الأسبوع '+ts.w:ts.w<1?'لم يبدأ التدريس':'انتهت أسابيع الفصل'} · مضى ${ts.E} من ${CC.lectureWeeks}${ts.cur?' · الحالي '+ts.cur:''} · المتبقي ${ts.R}</span></div>
    <div class="weeks">${cells}</div>
-   <div class="legend small muted"><span>✓ مرحّل</span><span>• مسودة أو مفتوح</span><span><i class="dot" style="background:var(--warn)"></i>أسبوع فيه امتحانات</span><span>الحد الأقصى للغياب ${lim} من ${LECT_WEEKS} محاضرات (${ABS_LIMIT*100}%)</span></div></section>`;
+   <div class="legend small muted"><span>✓ مرحّل</span><span>• مسودة أو مفتوح</span><span><i class="dot" style="background:var(--warn)"></i>أسبوع فيه امتحانات</span><span>الحد الأقصى للغياب ${lim} من ${CC.lectureWeeks} (${CC.absLimit}%)</span></div></section>`;
 }
 function pickerHtml(){
   const sid=sidOf(V.date,V.sec),ex=S.sessions[sid];
+  const dates=lectureDates(V.sec);const inList=dates.includes(V.date)&&!V.custom;
+  const opts=dates.map((d,i)=>{const s=S.sessions[sidOf(d,V.sec)];const r=S.records[sidOf(d,V.sec)];const mark=s?(s.status==='open'?' •':r&&r.final?' ✓':' •'):'';
+    return `<option value="${d}" ${d===V.date&&!V.custom?'selected':''}>الأسبوع ${i+1} · ${dayName(d)} ${fmtDate(d).slice(0,5)}${mark}</option>`}).join('');
   return `<section class="card col">
   <div class="row">
-    <div class="field"><label for="f-date">تاريخ المحاضرة</label><input id="f-date" type="date" value="${V.date}" data-f="date"></div>
-    <div class="field"><label>شعبة المامو (القاعة)</label><div class="seg" role="group"><button data-act="sec" data-v="1" aria-pressed="${V.sec===1}">1 · ${ROOMS[1]}</button><button data-act="sec" data-v="2" aria-pressed="${V.sec===2}">2 · ${ROOMS[2]}</button></div></div>
+    <div class="field"><label for="f-sec">الشعبة (مجموعة القاعة)</label><select id="f-sec" data-f="sec">${CC.mam.map(m=>`<option value="${m.n}" ${m.n===V.sec?'selected':''}>${mamLabel(m.n)}${m.day!=null?' · '+DAYS[m.day]:''}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-dsel">تاريخ المحاضرة</label><select id="f-dsel" data-f="dsel">${opts}<option value="custom" ${!inList?'selected':''}>تاريخ آخر...</option></select></div>
+    ${!inList?`<div class="field"><label for="f-date">اختر التاريخ</label><input id="f-date" type="date" value="${V.date}" data-f="date"></div>`:''}
     <button class="btn primary" data-act="startqr">${ex?'فتح الجلسة':'ابدأ بالرمز'}</button>
     ${ex?'':'<button class="btn ghost" data-act="startman">تسجيل يدوي بدون رمز</button>'}
   </div>
-  <div class="small muted">${dayName(V.date)} ${fmtDate(V.date)}. للأيام الماضية استخدم «تسجيل يدوي بدون رمز».</div>
+  <div class="small muted">${dayName(V.date)} ${fmtDate(V.date)} · الأسبوع ${weekNo(V.date)}. للأيام الماضية استخدم «تسجيل يدوي بدون رمز».</div>
   <div class="chips">${chipsHtml()}</div></section>`;
 }
 function liveHtml(){
@@ -346,27 +375,28 @@ function rowsHtml(s,r){
   const q=V.q.trim();
   return sessionRows(s.sec,r.draft).filter(x=>!q||x.name.includes(q)||String(x.id).includes(q)).map((x,i)=>{
     const absent=r.draft[x.id]==='A';const st=stat(x.id);const src=r.src[x.id];
-    const vis=x.mam!==s.sec?`<span class="pill warn">من مامو ${x.mam}</span>`:'';
-    const sp=src==='qr'?'<span class="pill qr">رمز QR</span>':src==='m'?'<span class="pill">يدوي</span>':'';
+    const vis=x.mam!==s.sec?`<span class="pill warn">من مجموعة ${x.mam}</span>`:'';
+    const sp=src?`<span class="pill ${src==='qr'?'qr':''}">${srcTxt(src)}</span>`:'';
     return `<tr><td class="num hm">${i+1}</td><td class="num">${x.id}</td><td class="name">${esc(x.name)} ${vis}</td>
+     <td class="num hm">${x.off}</td>
      <td class="num"><label class="sw"><input type="checkbox" data-act="tg" data-id="${x.id}" ${absent?'checked':''} aria-label="غياب ${esc(x.name)}"><span></span></label></td>
-     <td class="hm">${sp}</td><td class="num hm">${st.a}</td><td class="num hm"><span class="pct ${st.pct>20?'hi':''}">${st.pct.toFixed(2)}</span></td></tr>`}).join('')||'<tr><td colspan="7" class="muted center">لا نتائج</td></tr>';
+     <td class="hm">${sp}</td><td class="num hm">${st.a}</td><td class="num hm"><span class="pct ${st.pct>CC.absLimit?'hi':''}">${st.pct.toFixed(2)}</span></td></tr>`}).join('')||'<tr><td colspan="8" class="muted center">لا نتائج</td></tr>';
 }
-function counts(r){const v=Object.values(r.draft);const a=v.filter(x=>x==='A').length;return `حاضر ${v.length-a} · غائب ${a}`}
+const counts=r=>{const v=Object.values(r.draft);const a=v.filter(x=>x==='A').length;return `حاضر ${v.length-a} · غائب ${a}`};
 function editHtml(){
   const {s,r}=cur();const q=V.addq.trim();
   const res=q?students().filter(x=>!(x.id in r.draft)&&(x.name.includes(q)||String(x.id).includes(q))).slice(0,8):[];
   return `<section class="card col">
    <div class="row" style="justify-content:space-between;align-items:center">
-     <div><h2>قائمة الطلاب · ${dayName(s.date)} ${fmtDate(s.date)} · مامو ${s.sec} (${ROOMS[s.sec]}) · الأسبوع ${weekNo(s.date)}</h2><div class="small muted">المفعّل (الأخضر) = غياب</div></div>
+     <div><h2>قائمة الطلاب · ${dayName(s.date)} ${fmtDate(s.date)} · ${mamLabel(s.sec)} · الأسبوع ${weekNo(s.date)}</h2><div class="small muted">المفعّل (الأخضر) = غياب</div></div>
      <div class="row" style="align-items:center"><span class="pill" id="cnt">${counts(r)}</span><button class="btn ghost sm" data-act="xs">تنزيل Excel</button><button class="btn ghost sm" data-act="cs">تنزيل CSV</button><button class="btn ghost" data-act="reopen">فتح الرمز</button></div>
    </div>
    <div class="row">
      <div class="field" style="flex:1;min-width:180px"><label for="f-q">بحث في القائمة</label><input id="f-q" type="search" value="${esc(V.q)}" placeholder="الاسم أو الرقم الجامعي" data-f="q"></div>
-     <div class="field pop" style="flex:1;min-width:200px"><label for="f-add">إضافة طالب من شعبة أخرى كحاضر</label><input id="f-add" type="search" value="${esc(V.addq)}" placeholder="ابحث بالاسم أو الرقم" data-f="addq" autocomplete="off">
-       <div class="results" id="res" ${res.length?'':'hidden'}>${res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مامو ${x.mam}</span></button>`).join('')}</div></div>
+     <div class="field pop" style="flex:1;min-width:200px"><label for="f-add">إضافة طالب من مجموعة أخرى كحاضر</label><input id="f-add" type="search" value="${esc(V.addq)}" placeholder="ابحث بالاسم أو الرقم" data-f="addq" autocomplete="off">
+       <div class="results" id="res" ${res.length?'':'hidden'}>${res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مجموعة ${x.mam}</span></button>`).join('')}</div></div>
    </div>
-   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">المصدر</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة % (من ${LECT_WEEKS})</th></tr></thead><tbody id="rows">${rowsHtml(s,r)}</tbody></table></div>
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num hm">رسمي</th><th class="num">غياب</th><th class="hm">المصدر</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة % (من ${CC.lectureWeeks})</th></tr></thead><tbody id="rows">${rowsHtml(s,r)}</tbody></table></div>
    <div class="row"><button class="btn danger" data-act="${V.confirmDel?'delok':'del'}">${V.confirmDel?'تأكيد حذف الجلسة نهائياً':'حذف الجلسة'}</button>${V.confirmDel?'<button class="btn ghost" data-act="delno">تراجع</button>':''}</div>
   </section>
   <div class="bar"><div class="in"><span class="small" id="cstate">${stateText(r)}</span><button class="btn primary" data-act="commit" id="cbtn" ${isDirty(r)?'':'disabled'}>${r.final?'ترحيل التعديلات':'ترحيل الحضور'}</button></div></div>`;
@@ -377,105 +407,280 @@ function refreshRows(){
   const b=$('#cbtn');if(b){b.disabled=!isDirty(c.r);b.textContent=c.r.final?'ترحيل التعديلات':'ترحيل الحضور'}
   const st=$('#cstate');if(st)st.textContent=stateText(c.r);
 }
+
+/* ---------- views: official sheet ---------- */
 function officialHtml(){
-  const b=sundayOf(V.offDate);const done=doneBuckets();
+  const b=weekStart(V.offWeek);const done=new Set(doneBuckets());
   const list=students().filter(s=>s.off===V.offSec).sort((a,c)=>a.oi-c.oi||a.id-c.id);
   let n=0,missing=0;const abs=[];
   const body=list.map(s=>{const st=status(b,s.id);const t=stat(s.id);
     if(!st)missing++;if(st==='A')abs.push(s);
     if(V.onlyAbs&&st!=='A')return'';n++;
-    const tag=s.mam!==s.off?`<span class="pill warn">مامو ${s.mam}</span>`:`<span class="pill">مامو ${s.mam}</span>`;
+    const tag=s.mam!==s.off?`<span class="pill warn">مجموعة ${s.mam}</span>`:`<span class="pill">مجموعة ${s.mam}</span>`;
     return `<tr><td class="num hm">${n}</td><td class="num">${s.id}</td><td class="name">${esc(s.name)}</td>
     <td class="num"><label class="sw ro ${st?'':'na'}"><input type="checkbox" disabled ${st==='A'?'checked':''} aria-label="غياب ${esc(s.name)}"><span></span></label></td>
-    <td class="hm">${tag}</td><td class="num hm">${t.a}</td><td class="num hm"><span class="pct ${t.pct>20?'hi':''}">${t.pct.toFixed(2)}</span></td></tr>`}).join('')||'<tr><td colspan="7" class="muted center">لا نتائج</td></tr>';
-  const info=!done.includes(b)?`<div class="notice">لا توجد جلسة مرحّلة في هذا الأسبوع بعد.</div>`:missing?`<div class="notice">${missing} طالب بلا سجل لهذا الأسبوع: جلسة المامو الخاصة بهم لم تُرحَّل بعد.</div>`:'';
+    <td class="hm">${tag}</td><td class="num hm">${t.a}</td><td class="num hm"><span class="pct ${t.pct>CC.absLimit?'hi':''}">${t.pct.toFixed(2)}</span></td></tr>`}).join('')||'<tr><td colspan="7" class="muted center">لا نتائج</td></tr>';
+  const info=!done.has(b)?`<div class="notice">لا توجد جلسة مرحّلة في هذا الأسبوع بعد.</div>`:missing?`<div class="notice">${missing} طالب بلا سجل لهذا الأسبوع: جلسة مجموعتهم لم تُرحَّل بعد.</div>`:'';
+  const wopts=Array.from({length:CC.lectureWeeks},(_,i)=>i+1).map(k=>`<option value="${k}" ${V.offWeek===k?'selected':''}>الأسبوع ${k} · ${fmtDate(weekStart(k)).slice(0,5)} - ${fmtDate(addDays(weekStart(k),6)).slice(0,5)}${done.has(weekStart(k))?' ✓':''}</option>`).join('');
   return `<section class="card col">
    <div class="row">
-    <div class="field"><label>الشعبة الرسمية (النظام)</label><div class="seg"><button data-act="osec" data-v="1" aria-pressed="${V.offSec===1}">الشعبة 1 · ثلاثاء</button><button data-act="osec" data-v="2" aria-pressed="${V.offSec===2}">الشعبة 2 · خميس</button></div></div>
-    <div class="field"><label for="f-od">أي تاريخ من الأسبوع</label><input id="f-od" type="date" value="${V.offDate}" data-f="offDate"></div>
-    <button class="btn ghost" data-act="oprev">الأسبوع السابق</button><button class="btn ghost" data-act="onext">الأسبوع التالي</button>
+    <div class="field"><label for="f-os">الشعبة الرسمية (النظام)</label><select id="f-os" data-f="offSec">${CC.off.map(o=>`<option value="${o.n}" ${o.n===V.offSec?'selected':''}>${offLabel(o.n)}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-ow">الأسبوع</label><select id="f-ow" data-f="offWeek">${wopts}</select></div>
+    <label class="small" style="display:flex;gap:6px;align-items:center;min-height:40px"><input type="checkbox" id="f-oa" data-f="onlyAbs" ${V.onlyAbs?'checked':''}> الغائبون فقط</label>
+    <span style="margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-act="xo">تنزيل Excel</button><button class="btn ghost sm" data-act="co">تنزيل CSV</button><button class="btn primary" data-act="copyabs">نسخ أرقام الغائبين (${abs.length})</button></span>
    </div>
-   <div class="row" style="align-items:center"><span class="pill">الأسبوع ${weekNo(b)} · من ${fmtDate(b)} إلى ${fmtDate(addDays(b,6))}</span>
-    <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-oa" data-f="onlyAbs" ${V.onlyAbs?'checked':''}> الغائبون فقط</label>
-    <span style="margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-act="xo">تنزيل Excel</button><button class="btn ghost sm" data-act="co">تنزيل CSV</button><button class="btn primary" data-act="copyabs">نسخ أرقام الغائبين (${abs.length})</button></span></div>
    ${info}
    ${V.copy?`<div class="field"><label>حدّد النص وانسخه</label><textarea class="copy" id="copybox" readonly>${esc(V.copy)}</textarea></div>`:''}
-   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">شعبة المامو</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة % (من ${LECT_WEEKS})</th></tr></thead><tbody>${body}</tbody></table></div>
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">مجموعة القاعة</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة % (من ${CC.lectureWeeks})</th></tr></thead><tbody>${body}</tbody></table></div>
    <div class="small muted">الكشف يتبع الشعبة الرسمية في النظام. الطالب الذي حضر في أي قاعة خلال الأسبوع يُحسب حاضراً، والأسبوع يبدأ من الأحد.</div>
   </section>`;
 }
+
+/* ---------- views: student log ---------- */
+function historyOf(id){
+  return Object.entries(S.records).filter(([,r])=>id in r.draft).sort((a,b)=>a[1].date.localeCompare(b[1].date)||a[1].sec-b[1].sec).map(([sid,r])=>({sid,r,s:S.sessions[sid]}));
+}
+function logHtml(){
+  const q=V.lq.trim();
+  const res=q?students().filter(x=>x.name.includes(q)||String(x.id).includes(q)).slice(0,10):[];
+  let detail='';
+  const st=V.lid?STU.get(V.lid):null;
+  if(st){
+    const h=historyOf(st.id);const t=stat(st.id);
+    const rows=h.map(({sid,r})=>{const v=r.draft[st.id];const fin=r.final?(r.final[st.id]||'—'):null;
+      return `<tr><td>${dayName(r.date)} ${fmtDate(r.date)}</td><td class="num">${weekNo(r.date)}</td><td>${mamLabel(r.sec)}${st.mam!==r.sec?' <span class="pill warn">قاعة غير قاعته</span>':''}</td>
+      <td class="num"><span class="pill ${v==='A'?'warn':'qr'}">${v==='A'?'غائب':'حاضر'}</span></td><td>${srcTxt(r.src[st.id])}</td><td class="num">${r.times&&r.times[st.id]?clock(r.times[st.id]):''}</td>
+      <td class="num">${fin===null?'مسودة':fin==='A'?'غياب':fin==='P'?'حضور':'—'}</td></tr>`}).join('')||'<tr><td colspan="7" class="muted center">لا حركات مسجّلة لهذا الطالب</td></tr>';
+    detail=`<div class="sub col"><div class="row" style="justify-content:space-between;align-items:center"><div><h2>${esc(st.name)}</h2><div class="small muted">${st.id} · الشعبة الرسمية ${offLabel(st.off)} · مجموعة القاعة ${mamLabel(st.mam)}</div></div>
+      <div class="small">غياب مرحّل: <b>${t.a}</b> من ${CC.lectureWeeks} (${t.pct.toFixed(2)}%)</div></div>
+      <div class="tbl"><table><thead><tr><th>اليوم</th><th class="num">الأسبوع</th><th>القاعة</th><th class="num">الحالة</th><th>المصدر</th><th class="num">وقت الرمز</th><th class="num">المرحّل</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }
+  return `<section class="card col"><div class="row" style="justify-content:space-between;align-items:center"><h2>سجل الطلاب</h2>
+    <span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-act="xr">تقرير شامل Excel</button><button class="btn ghost sm" data-act="cr">كل الحركات CSV</button></span></div>
+   <div class="field pop"><label for="f-lq">ابحث عن طالب بالاسم أو الرقم</label><input id="f-lq" type="search" value="${esc(V.lq)}" data-f="lq" autocomplete="off" placeholder="اكتب للبحث">
+     <div class="results" id="lres" ${res.length&&!V.lid?'':'hidden'}>${res.map(x=>`<button data-act="lpick" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id}</span></button>`).join('')}</div></div>
+   ${detail||'<div class="muted small">اختر طالباً لتشاهد كل جلسة حضرها أو غاب عنها. التقرير الشامل يحتوي كل الحركات لكل الطلاب في ملف واحد.</div>'}</section>`;
+}
+
+/* ---------- views: roster management ---------- */
 function manageHtml(){
   const all=students();
-  if(!all.length)return `<section class="card col"><h2>لا توجد قوائم بعد</h2><p class="muted">استورد ملف القوائم (roster.json) مرة واحدة، أو أضف الطلاب يدوياً.</p>
-    <div class="row"><input type="file" id="f-imp" accept="application/json,.json" data-f="import"></div></section>`;
+  const imp=`<div class="sub col"><h2>استيراد من ملفات النظام (Excel)</h2>
+    <div class="small muted">اختر ملف أو أكثر بصيغة xlsx كما تنزّلها من موقع الجامعة (ورقة لكل شعبة مسموحة). اختر النوع أولاً.</div>
+    <div class="row"><div class="field"><label for="i-kind">نوع الملف</label><select id="i-kind"><option value="off">قوائم الشعب الرسمية (النظام)</option><option value="mam">توزيع مجموعات القاعة (داخلي)</option></select></div>
+    <div class="field"><label for="f-imp">الملف</label><input type="file" id="f-imp" accept=".xlsx,.xls" multiple data-f="import"></div></div></div>`;
+  if(!all.length)return `<section class="card col"><h2>لا توجد قوائم لهذا المساق بعد</h2><p class="muted" style="margin:0">استورد القوائم من ملفات الجامعة أو أضف الطلاب يدوياً.</p>${imp}</section>`;
   const q=V.mq.trim();
   const list=all.filter(s=>(!q||s.name.includes(q)||String(s.id).includes(q))&&(!V.mdiff||s.off!==s.mam)).sort((a,b)=>a.off-b.off||a.oi-b.oi||a.id-b.id);
-  const c=(k,v)=>all.filter(s=>s[k]===v).length;const diff=all.filter(s=>s.off!==s.mam).length;
-  const sel=(f,id,v)=>`<select data-f="${f}" data-id="${id}" aria-label="${f==='moff'?'الشعبة الرسمية':'شعبة المامو'}"><option value="1" ${v===1?'selected':''}>1</option><option value="2" ${v===2?'selected':''}>2</option></select>`;
+  const cnt=k=>CC[k==='off'?'off':'mam'].map(x=>`${k==='off'?'رسمي':'مجموعة'} ${x.n}: ${all.filter(s=>s[k]===x.n).length}`).join(' · ');
+  const diff=all.filter(s=>s.off!==s.mam).length;
+  const sel=(f,id,v,arr)=>`<select data-f="${f}" data-id="${id}">${arr.map(x=>`<option value="${x.n}" ${v===x.n?'selected':''}>${x.n}</option>`).join('')}</select>`;
   const rows=list.map((s,i)=>`<tr><td class="num hm">${i+1}</td><td class="num">${s.id}</td><td><input class="nm" type="text" value="${esc(s.name)}" data-f="mname" data-id="${s.id}"></td>
-    <td class="num">${sel('moff',s.id,s.off)}</td><td class="num">${sel('mmam',s.id,s.mam)}</td>
+    <td class="num">${sel('moff',s.id,s.off,CC.off)}</td><td class="num">${sel('mmam',s.id,s.mam,CC.mam)}</td>
     <td class="num">${V.mdel===s.id?`<button class="btn sm danger" data-act="mdelok" data-id="${s.id}">تأكيد</button>`:`<button class="btn sm ghost" data-act="mdel" data-id="${s.id}">حذف</button>`}</td></tr>`).join('')||'<tr><td colspan="6" class="muted center">لا نتائج</td></tr>';
   return `<section class="card col">
-   <div class="row" style="justify-content:space-between;align-items:center"><h2>إدارة القوائم</h2>
-     <span class="small muted">رسمي 1: ${c('off',1)} · رسمي 2: ${c('off',2)} · مامو 1: ${c('mam',1)} · مامو 2: ${c('mam',2)} · مختلفون: ${diff}</span></div>
+   <div class="row" style="justify-content:space-between;align-items:center"><h2>قوائم الطلاب · ${esc(CC.name)}</h2>
+     <span class="small muted">${all.length} طالب · ${cnt('off')} · ${cnt('mam')} · مختلفون: ${diff}</span></div>
    <div class="row">
      <div class="field" style="flex:1;min-width:180px"><label for="f-mq">بحث</label><input id="f-mq" type="search" value="${esc(V.mq)}" data-f="mq" placeholder="الاسم أو الرقم الجامعي"></div>
      <label class="small" style="display:flex;gap:6px;align-items:center;min-height:40px"><input type="checkbox" id="f-md" data-f="mdiff" ${V.mdiff?'checked':''}> المختلفون فقط</label>
    </div>
-   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">الشعبة الرسمية</th><th class="num">شعبة المامو</th><th></th></tr></thead><tbody id="mrows">${rows}</tbody></table></div>
-   <h2 style="margin-top:6px">إضافة طالب</h2>
-   <div class="row">
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">الشعبة الرسمية</th><th class="num">مجموعة القاعة</th><th></th></tr></thead><tbody id="mrows">${rows}</tbody></table></div>
+   <div class="sub col"><h2>إضافة طالب</h2><div class="row">
      <div class="field"><label for="n-id">الرقم الجامعي</label><input id="n-id" type="text" inputmode="numeric" dir="ltr" style="width:130px"></div>
      <div class="field" style="flex:1;min-width:180px"><label for="n-name">الاسم</label><input id="n-name" type="text"></div>
-     <div class="field"><label for="n-off">رسمي</label><select id="n-off"><option>1</option><option>2</option></select></div>
-     <div class="field"><label for="n-mam">مامو</label><select id="n-mam"><option>1</option><option>2</option></select></div>
-     <button class="btn primary" data-act="madd">إضافة</button>
-   </div>
-   <div class="small muted">أي تعديل يُحفظ مباشرة. تغيير شعبة المامو يؤثر على الجلسات الجديدة فقط ولا يغيّر ما رُحّل سابقاً.</div>
+     <div class="field"><label for="n-off">رسمي</label><select id="n-off">${CC.off.map(x=>`<option>${x.n}</option>`).join('')}</select></div>
+     <div class="field"><label for="n-mam">مجموعة</label><select id="n-mam">${CC.mam.map(x=>`<option>${x.n}</option>`).join('')}</select></div>
+     <button class="btn primary" data-act="madd">إضافة</button></div></div>
+   ${imp}
+   <div class="small muted">أي تعديل يُحفظ مباشرة. تغيير مجموعة القاعة يؤثر على الجلسات الجديدة فقط ولا يغيّر ما رُحّل سابقاً.</div>
   </section>`;
+}
+
+/* ---------- views: courses ---------- */
+function courseFormHtml(){
+  const c=V.cf;if(!c)return'';
+  const num=(k,l,w)=>`<div class="field"><label>${l}</label><input type="number" data-cf="${k}" value="${c[k]}" style="width:${w||110}px"></div>`;
+  const off=c.off.map((o,i)=>`<tr><td><input type="number" data-ca="off" data-i="${i}" data-k="n" value="${o.n}" style="width:70px"></td>
+    <td><select data-ca="off" data-i="${i}" data-k="day">${DAYS.map((d,k)=>`<option value="${k}" ${o.day===k?'selected':''}>${d}</option>`).join('')}</select></td>
+    <td class="num"><button class="btn sm danger" data-act="cadel" data-g="off" data-i="${i}">حذف</button></td></tr>`).join('');
+  const mam=c.mam.map((o,i)=>`<tr><td><input type="number" data-ca="mam" data-i="${i}" data-k="n" value="${o.n}" style="width:70px"></td>
+    <td><input type="text" data-ca="mam" data-i="${i}" data-k="room" value="${esc(o.room||'')}" placeholder="مثلاً LAB" style="width:130px"></td>
+    <td><select data-ca="mam" data-i="${i}" data-k="day">${DAYS.map((d,k)=>`<option value="${k}" ${o.day===k?'selected':''}>${d}</option>`).join('')}</select></td>
+    <td class="num"><button class="btn sm danger" data-act="cadel" data-g="mam" data-i="${i}">حذف</button></td></tr>`).join('');
+  const ex=(c.exams||[]).map((o,i)=>`<tr><td><input type="text" data-ca="exams" data-i="${i}" data-k="label" value="${esc(o.label)}" style="width:150px"></td>
+    <td><input type="date" data-ca="exams" data-i="${i}" data-k="from" value="${o.from}"></td><td><input type="date" data-ca="exams" data-i="${i}" data-k="to" value="${o.to}"></td>
+    <td class="num"><button class="btn sm danger" data-act="cadel" data-g="exams" data-i="${i}">حذف</button></td></tr>`).join('');
+  return `<section class="card col"><h2>${c.id?'تعديل مساق':'مساق جديد'}</h2>
+   <div class="row"><div class="field"><label>رمز المساق</label><input type="text" data-cf="code" value="${esc(c.code)}" placeholder="مثلاً شع331" style="width:130px"></div>
+     <div class="field" style="flex:1;min-width:200px"><label>اسم المساق</label><input type="text" data-cf="name" value="${esc(c.name)}"></div>
+     <div class="field"><label>الفصل</label><input type="text" data-cf="term" value="${esc(c.term)}"></div></div>
+   <div class="row"><div class="field"><label>أول يوم تدريس (أحد)</label><input type="date" data-cf="termStart" value="${c.termStart}"></div>
+     ${num('lectureWeeks','أسابيع المحاضرات')}${num('totalWeeks','أسابيع الفصل كلها')}${num('absLimit','حد الغياب %')}</div>
+   <div class="sub"><h2>الشعب الرسمية (النظام)</h2><div class="tbl" style="margin-top:8px"><table style="min-width:0"><thead><tr><th>رقم الشعبة</th><th>يوم المحاضرة بالنظام</th><th></th></tr></thead><tbody>${off}</tbody></table></div><button class="btn sm ghost" data-act="cadd" data-g="off" style="margin-top:8px">+ شعبة رسمية</button></div>
+   <div class="sub"><h2>مجموعات القاعة (التوزيع الداخلي)</h2><div class="tbl" style="margin-top:8px"><table style="min-width:0"><thead><tr><th>الرقم</th><th>القاعة</th><th>يوم المحاضرة الفعلي</th><th></th></tr></thead><tbody>${mam}</tbody></table></div><button class="btn sm ghost" data-act="cadd" data-g="mam" style="margin-top:8px">+ مجموعة</button></div>
+   <div class="sub"><h2>فترات الامتحانات (اختياري، للتنبيه فقط)</h2><div class="tbl" style="margin-top:8px"><table style="min-width:0"><thead><tr><th>الاسم</th><th>من</th><th>إلى</th><th></th></tr></thead><tbody>${ex||'<tr><td colspan="4" class="muted center">لا توجد فترات</td></tr>'}</tbody></table></div><button class="btn sm ghost" data-act="cadd" data-g="exams" style="margin-top:8px">+ فترة امتحان</button></div>
+   <div class="row"><button class="btn primary" data-act="csave">حفظ المساق</button><button class="btn ghost" data-act="ccancel">إلغاء</button></div></section>`;
+}
+function coursesHtml(){
+  const rows=[...COURSES.values()].map(c=>`<tr><td dir="auto">${esc(c.code)}</td><td>${esc(c.name)}</td><td class="hm">${esc(c.term||'')}</td>
+    <td class="num"><button class="btn sm ghost" data-act="cedit" data-id="${c.id}">تعديل</button>
+    ${V.cdel===c.id?`<button class="btn sm danger" data-act="cdelok" data-id="${c.id}">تأكيد الحذف النهائي</button>`:`<button class="btn sm danger" data-act="cdel" data-id="${c.id}">حذف</button>`}</td></tr>`).join('')||'<tr><td colspan="4" class="muted center">لا توجد مساقات بعد</td></tr>';
+  return `<section class="card col"><div class="row" style="justify-content:space-between;align-items:center"><h2>المساقات</h2><button class="btn primary" data-act="cnew">+ مساق جديد</button></div>
+   <div class="tbl"><table style="min-width:0"><thead><tr><th>الرمز</th><th>الاسم</th><th class="hm">الفصل</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+   ${LEGACY?`<div class="notice">وُجدت بيانات من النسخة السابقة (مساق شع331). <button class="btn sm" data-act="legacy">نقلها كمساق جاهز</button></div>`:''}
+   <div class="small muted">حذف المساق يمحو كل طلابه وجلساته وسجلاته نهائياً.</div></section>${courseFormHtml()}`;
 }
 function adminsHtml(){
   const rows=ADMINS.map(e=>`<tr><td dir="ltr" style="text-align:right">${esc(e)}</td><td class="num"><button class="btn sm danger" data-act="admdel" data-e="${esc(e)}">إزالة</button></td></tr>`).join('')||'<tr><td colspan="2" class="muted center">لا يوجد مشرفون بعد</td></tr>';
   return `<section class="card col"><h2>المشرفون</h2>
-   <p class="muted small" style="margin:0">المشرف يستطيع أخذ الحضور وتعديله وحذفه وإدارة القوائم، لكنه لا يضيف مشرفين. لإضافة مشرف: أنشئ له أولاً حساباً في Firebase (Authentication ثم Users ثم Add user)، ثم اكتب بريده هنا.</p>
+   <p class="muted small" style="margin:0">المشرف يستطيع أخذ الحضور وتعديله وحذفه وإدارة القوائم والمساقات، لكنه لا يضيف مشرفين. لإضافة مشرف: أنشئ له أولاً حساباً في Firebase (Authentication ثم Users ثم Add user)، ثم اكتب بريده هنا.</p>
    <div class="tbl"><table style="min-width:0"><thead><tr><th>بريد المشرف</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
    <div class="row"><div class="field" style="flex:1;min-width:220px"><label for="a-mail">بريد مشرف جديد</label><input id="a-mail" type="email" dir="ltr" placeholder="name@example.com"></div><button class="btn primary" data-act="admadd">إضافة</button></div></section>`;
 }
+
+/* ---------- teacher shell ---------- */
 function teacherHtml(){
-  let main='';const c=cur();
-  if(V.tab==='rec')main=termHtml()+pickerHtml()+(c&&c.s?(c.s.status==='open'?liveHtml():editHtml()):'');
-  else if(V.tab==='off')main=officialHtml();
-  else if(V.tab==='adm'&&IS_OWNER)main=adminsHtml();
-  else main=manageHtml();
-  return `<header class="top"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${TITLE}</h1></div>
+  const hasC=!!CC;
+  const tab=!hasC&&V.tab!=='crs'&&V.tab!=='adm'?'crs':V.tab;
+  let main='';
+  if(tab==='rec')main=termHtml()+pickerHtml()+(cur()&&cur().s?(cur().s.status==='open'?liveHtml():editHtml()):'');
+  else if(tab==='off')main=officialHtml();
+  else if(tab==='log')main=logHtml();
+  else if(tab==='man')main=manageHtml();
+  else if(tab==='crs')main=coursesHtml();
+  else if(tab==='adm'&&IS_OWNER)main=adminsHtml();
+  const T=(k,l)=>`<button class="tab" role="tab" data-act="tab" data-v="${k}" aria-selected="${tab===k}">${l}</button>`;
+  const csel=hasC?`<div class="field"><label for="f-course">المساق</label><select id="f-course" data-f="course" style="min-width:230px">${[...COURSES.values()].map(c=>`<option value="${c.id}" ${c.id===V.cid?'selected':''}>${esc(c.code)} · ${esc(c.name)}</option>`).join('')}</select></div>`:'';
+  return `<header class="top"><div><div class="eyebrow">نظام حضور المساقات${hasC?' · '+esc(CC.term||''):''}</div><h1>${hasC?'حضور مساق '+esc(CC.name):'نظام حضور المساقات'}</h1></div>
    <div class="row" style="align-items:center"><button class="theme" data-act="theme">${themeLabel()}</button><button class="theme" data-act="refresh">تحديث</button><button class="theme" data-act="logout">خروج</button></div></header>
-   <nav class="tabs" role="tablist"><button class="tab" role="tab" data-act="tab" data-v="rec" aria-selected="${V.tab==='rec'}">تسجيل الحضور</button><button class="tab" role="tab" data-act="tab" data-v="off" aria-selected="${V.tab==='off'}">كشف النظام الرسمي</button><button class="tab" role="tab" data-act="tab" data-v="man" aria-selected="${V.tab==='man'}">إدارة القوائم</button>${IS_OWNER?`<button class="tab" role="tab" data-act="tab" data-v="adm" aria-selected="${V.tab==='adm'}">المشرفون</button>`:''}</nav>
+   ${hasC?`<div class="tool">${csel}</div>`:''}
+   <nav class="tabs" role="tablist">${hasC?T('rec','تسجيل الحضور')+T('off','كشف النظام الرسمي')+T('log','سجل الطلاب')+T('man','قوائم الطلاب'):''}${T('crs','المساقات')}${IS_OWNER?T('adm','المشرفون'):''}</nav>
    ${main}`;
 }
 function renderAll(){
   if(isStudent)return renderStudent();
   const a=document.activeElement&&document.activeElement.id;
   $('#app').innerHTML=teacherHtml();
-  if(a&&$('#'+a)&&$('#'+a).tagName!=='BUTTON'&&$('#'+a).type!=='file'){const e=$('#'+a);e.focus();try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}
-  const c=cur();const open=!!(c&&c.s&&c.s.status==='open');
+  if(a&&$('#'+a)&&$('#'+a).tagName!=='BUTTON'&&$('#'+a).type!=='file'&&$('#'+a).tagName!=='SELECT'){const e=$('#'+a);e.focus();try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}
+  const c=cur();const open=!!(CC&&c&&c.s&&c.s.status==='open');
   if(live.sid&&(live.sid!==V.sid||!open))stopLive();
   if(open&&live.sid!==V.sid)startLive();
   else if(open&&V.tab==='rec'){live.qr=null;drawQR();updateLive()}
 }
 function renderLogin(msg){
   $('#app').innerHTML=`<div class="stu"><div class="row" style="justify-content:flex-end"><button class="theme" data-act="theme">${themeLabel()}</button></div>
-  <div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${TITLE}</h1></div>
-  <form class="card" id="login"><h2>دخول المدرّس</h2>
+  <div><div class="eyebrow">نظام حضور المساقات</div><h1>دخول المدرّس</h1></div>
+  <form class="card" id="login">
    <div class="field"><label for="l-mail">البريد الإلكتروني</label><input id="l-mail" type="email" dir="ltr" autocomplete="username" required></div>
    <div class="field"><label for="l-pass">كلمة المرور</label><input id="l-pass" type="password" dir="ltr" autocomplete="current-password" required></div>
    ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="btn primary" type="submit">دخول</button></form></div>`;
 }
 
+/* ---------- import (university xlsx) ---------- */
+function parseUniSheet(ws){
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const meta={};let hdr=-1;
+  for(let i=0;i<aoa.length&&hdr<0;i++){const r=aoa[i];const k=String(r[0]==null?'':r[0]).trim();
+    if(k==='الشعبة')meta.sec=Number(r[2]);else if(k==='القاعة')meta.room=r[2];else if(k==='الأيام')meta.day=r[2];
+    if(String(r[1]==null?'':r[1]).includes('الرقم الجامعي'))hdr=i}
+  const rows=[];if(hdr>=0)for(let i=hdr+1;i<aoa.length;i++){const r=aoa[i];const id=Number(r[1]);if(Number.isInteger(id)&&id>0&&r[2])rows.push({id,name:String(r[2]).trim()})}
+  return{meta,rows};
+}
+async function importFiles(files,kind){
+  if(typeof XLSX==='undefined')return toast('مكتبة Excel لم تُحمَّل. تحقق من الاتصال');
+  let added=0,updated=0,sheets=0;const warn=[];
+  for(const f of files){
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    for(const name of wb.SheetNames){
+      const {meta,rows}=parseUniSheet(wb.Sheets[name]);
+      if(!rows.length)continue;
+      if(!Number.isInteger(meta.sec)||meta.sec<1){warn.push(`ورقة «${name}» بدون رقم شعبة`);continue}
+      sheets++;const n=meta.sec;const day=dayFromTxt(meta.day);
+      if(kind==='off'){if(!CC.off.find(x=>x.n===n))CC.off.push({n,day:day==null?2:day})}
+      else{if(!CC.mam.find(x=>x.n===n))CC.mam.push({n,room:meta.room||'',day:day==null?0:day})}
+      rows.forEach((r,i)=>{
+        let s=STU.get(r.id);
+        if(!s){s={id:r.id,name:r.name,off:n,mam:n,oi:i+1,mi:i+1};STU.set(r.id,s);added++}
+        else{updated++;s.name=s.name||r.name}
+        if(kind==='off'){s.off=n;s.oi=i+1}else{s.mam=n;s.mi=i+1}
+        if(kind==='mam'&&!CC.off.find(x=>x.n===s.off)){CC.off.push({n:s.off,day:2})}
+      });
+    }
+  }
+  if(!sheets)return toast(warn[0]||'لم أجد قوائم طلاب في الملف');
+  await saveCourse(CC);COURSES.set(CC.id,CC);
+  try{let b=writeBatch(db),k=0;for(const s of students()){b.set(cref('students',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi});if(++k%400===0){await b.commit();b=writeBatch(db)}}await b.commit()}
+  catch(e){console.error(e);return toast('تعذّر حفظ القوائم')}
+  toast(`تم: ${added} طالب جديد، ${updated} محدّث${warn.length?' · '+warn.join('، '):''}`);renderAll();
+}
+async function legacyImport(){
+  toast('جارٍ النقل...');
+  try{
+    const id='c'+rand().slice(0,5);
+    const c={id,code:'شع331',name:'تصوير الثدي بالأشعة',term:'الفصل الأول 2026-2027',termStart:'2026-10-11',lectureWeeks:15,totalWeeks:17,absLimit:20,
+      off:[{n:1,day:2},{n:2,day:4}],mam:[{n:1,room:'M4202',day:2},{n:2,room:'LAB',day:0}],
+      exams:[{label:'الامتحان الأول',from:'2026-11-07',to:'2026-11-21'},{label:'الامتحان النصفي',from:'2026-11-29',to:'2026-12-10'},{label:'الامتحان الثاني',from:'2026-12-12',to:'2026-12-26'},{label:'النهائي العملي',from:'2027-01-16',to:'2027-01-21'},{label:'النهائي النظري',from:'2027-01-23',to:'2027-02-06'}]};
+    await setDoc(doc(db,'courses',id),courseData(c));
+    const [r,s,rc]=await Promise.all([getDocs(collection(db,'roster')),getDocs(collection(db,'sessions')),getDocs(collection(db,'records'))]);
+    let b=writeBatch(db),n=0;const flush=async()=>{await b.commit();b=writeBatch(db)};
+    for(const d of r.docs){b.set(doc(db,'courses',id,'students',d.id),d.data());if(++n%400===0)await flush()}
+    for(const d of s.docs){const x=d.data();b.set(doc(db,'courses',id,'sessions',d.id),{date:x.date,sec:x.sec,status:x.status==='open'?'closed':x.status,openedAt:x.openedAt||Date.now(),courseName:c.name,courseCode:c.code,room:(c.mam.find(m=>m.n===x.sec)||{}).room||''});if(++n%400===0)await flush()}
+    for(const d of rc.docs){b.set(doc(db,'courses',id,'records',d.id),d.data());if(++n%400===0)await flush()}
+    await b.commit();
+    LEGACY=false;await loadAll();await selectCourse(id);V.tab='rec';toast('تم نقل بيانات شع331');renderAll();
+  }catch(e){console.error(e);toast('تعذّر النقل: تأكد من نشر القواعد الجديدة')}
+}
+
+/* ---------- export ---------- */
+function downloadCSV(name,aoa){
+  const csv='﻿'+aoa.map(r=>r.map(c=>{c=c==null?'':String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function downloadXLSX(name,sheets){
+  if(typeof XLSX==='undefined')return toast('مكتبة Excel لم تُحمَّل. جرّب تنزيل CSV');
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(([n,aoa,w])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=(w||aoa[0].map(()=>16)).map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n.slice(0,31))});
+  wb.Workbook={Views:[{RTL:true}]};XLSX.writeFile(wb,name);
+}
+const fn=(a)=>`${CC.code.replace(/[^\w]/g,'')||'course'}_${a}`;
+function sessionExport(){
+  const {s,r}=cur();const head=['#','الرقم الجامعي','الاسم','الشعبة الرسمية (النظام)','مجموعة القاعة الأصلية','الحالة','المصدر','وقت التسجيل بالرمز','حضر بقاعة غير قاعته','عدد الغياب المرحّل','نسبة الغياب % (من '+CC.lectureWeeks+')','التاريخ','اليوم','الأسبوع','قاعة الجلسة','مجموعة الجلسة','حالة الجلسة'];
+  const all=sessionRows(s.sec,r.draft);
+  const rows=all.map((x,i)=>{const st=stat(x.id);const src=r.src[x.id];const tm=(r.times||{})[x.id];
+    return [i+1,x.id,x.name,x.off,x.mam,r.draft[x.id]==='A'?'غائب':'حاضر',srcTxt(src),tm?clock(tm):'',x.mam!==s.sec?'نعم':'',st.a,+st.pct.toFixed(2),fmtDate(s.date),dayName(s.date),weekNo(s.date),room(s.sec),s.sec,r.final?(isDirty(r)?'مرحّل مع تعديلات غير مرحّلة':'مرحّل'):'مسودة']});
+  const A=x=>r.draft[x.id]==='A';const cnt=f=>all.filter(f).length;
+  const sum=[['البند','القيمة'],['المساق',CC.code+' '+CC.name],['التاريخ',fmtDate(s.date)+' ('+dayName(s.date)+')'],['الأسبوع',weekNo(s.date)+' من '+CC.lectureWeeks],['مجموعة القاعة / القاعة',s.sec+' / '+room(s.sec)],['إجمالي الطلاب في القائمة',all.length],['حاضر',cnt(x=>!A(x))],['غائب',cnt(A)]];
+  CC.off.forEach(o=>{sum.push([`حاضر من الشعبة الرسمية ${o.n}`,cnt(x=>!A(x)&&x.off===o.n)]);sum.push([`غائب من الشعبة الرسمية ${o.n}`,cnt(x=>A(x)&&x.off===o.n)])});
+  sum.push(['حضروا بقاعة غير قاعتهم',cnt(x=>x.mam!==s.sec)],['سُجّلوا بالرمز',cnt(x=>r.src[x.id]==='qr')],['سُجّلوا يدوياً',cnt(x=>r.src[x.id]==='m')]);
+  return{head,rows,sum,name:fn(`session_${s.date}_g${s.sec}`)};
+}
+function officialExport(sec){
+  const b=weekStart(V.offWeek);const head=['#','الرقم الجامعي','الاسم','الشعبة الرسمية (النظام)','مجموعة القاعة','حالة الأسبوع','عدد الغياب الكلي','نسبة الغياب % (من '+CC.lectureWeeks+')','الأسبوع','من','إلى'];
+  const rows=students().filter(s=>s.off===sec).sort((a,c)=>a.oi-c.oi||a.id-c.id).map((s,i)=>{const st=status(b,s.id);const t=stat(s.id);
+    return [i+1,s.id,s.name,s.off,s.mam,st==='A'?'غائب':st==='P'?'حاضر':'غير مسجّل',t.a,+t.pct.toFixed(2),weekNo(b),fmtDate(b),fmtDate(addDays(b,6))]});
+  return{head,rows};
+}
+function fullReport(){
+  const sess=Object.entries(S.records).sort((a,b)=>a[1].date.localeCompare(b[1].date)||a[1].sec-b[1].sec);
+  const logHead=['التاريخ','اليوم','الأسبوع','مجموعة القاعة','القاعة','الرقم الجامعي','الاسم','الشعبة الرسمية','مجموعة الطالب الأصلية','الحالة','المصدر','وقت الرمز','قاعة غير قاعته','الترحيل'];
+  const log=[];
+  sess.forEach(([sid,r])=>{sessionRows(r.sec,r.draft).forEach(x=>{log.push([fmtDate(r.date),dayName(r.date),weekNo(r.date),r.sec,room(r.sec),x.id,x.name,x.off,x.mam,r.draft[x.id]==='A'?'غائب':'حاضر',srcTxt((r.src||{})[x.id]),(r.times||{})[x.id]?clock(r.times[x.id]):'',x.mam!==r.sec?'نعم':'',r.final?'مرحّل':'مسودة'])})});
+  const mh=['الرقم الجامعي','الاسم','الشعبة الرسمية','مجموعة القاعة',...sess.map(([,r])=>`${fmtDate(r.date).slice(0,5)} م${r.sec}`)];
+  const all=students().sort((a,b)=>a.off-b.off||a.oi-b.oi||a.id-b.id);
+  const mat=all.map(x=>[x.id,x.name,x.off,x.mam,...sess.map(([,r])=>x.id in r.draft?(r.draft[x.id]==='A'?'غ':'ح'):'')]);
+  const bs=doneBuckets();
+  const wh=['الرقم الجامعي','الاسم','الشعبة الرسمية','مجموعة القاعة',...bs.map(b=>`أ${weekNo(b)}`),'عدد الغياب','النسبة %'];
+  const wk=all.map(x=>{const t=stat(x.id);return[x.id,x.name,x.off,x.mam,...bs.map(b=>{const st=status(b,x.id);return st==='A'?'غ':st==='P'?'ح':'—'}),t.a,+t.pct.toFixed(2)]});
+  return{logHead,log,mh,mat,wh,wk};
+}
+
 /* ---------- student view ---------- */
 const ST={step:'load',msg:'',who:null,sess:null,loadedAt:Date.now()};
+const sref=(...p)=>doc(db,'courses',hashM[1],...p);
 async function initStudent(){
-  const sid=hashM[1];
-  try{const d=await getDoc(doc(db,'sessions',sid));ST.sess=d.exists()?d.data():null}catch(e){ST.sess=null}
+  const sid=hashM[2];
+  try{const d=await getDoc(sref('sessions',sid));ST.sess=d.exists()?d.data():null}catch(e){ST.sess=null}
   if(!ST.sess)ST.step='bad',ST.msg='لم يتم العثور على هذه الجلسة. تأكد من مسح الرمز المعروض في القاعة.';
   else if(ST.sess.status!=='open')ST.step='bad',ST.msg='تم إغلاق تسجيل الحضور لهذه المحاضرة. راجع المدرّس.';
   else ST.step='id';
@@ -483,7 +688,7 @@ async function initStudent(){
 }
 function renderStudent(){
   const s=ST.sess;
-  const head=`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${TITLE}</h1>${s?`<div class="small muted">${dayName(s.date)} ${fmtDate(s.date)}</div>`:''}</div><button class="theme" data-act="theme">${themeLabel()}</button></div>`;
+  const head=`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">${s?esc(s.courseCode||''):'نظام حضور المساقات'}</div><h1>${s?'حضور مساق '+esc(s.courseName||''):'حضور المساق'}</h1>${s?`<div class="small muted">${dayName(s.date)} ${fmtDate(s.date)}${s.room?' · '+esc(s.room):''}</div>`:''}</div><button class="theme" data-act="theme">${themeLabel()}</button></div>`;
   let body='';
   if(ST.step==='load')body='<p class="muted">جارٍ التحقق من الرمز...</p>';
   else if(ST.step==='bad')body=`<div class="err">${esc(ST.msg)}</div>`;
@@ -496,76 +701,40 @@ function renderStudent(){
 async function stuLookup(){
   const v=($('#sid-in').value||'').replace(/\D/g,'');
   if(!v){ST.msg='اكتب رقمك الجامعي.';return renderStudent()}
-  try{const d=await getDoc(doc(db,'roster',v));
+  try{const d=await getDoc(sref('students',v));
     if(!d.exists()){ST.msg='هذا الرقم غير موجود في قائمة المساق.';return renderStudent()}
     ST.who={id:v,name:d.data().name};ST.msg='';ST.step='confirm';renderStudent();
   }catch(e){ST.msg='تعذّر الاتصال. حاول مرة أخرى.';renderStudent()}
 }
 async function stuConfirm(){
-  const sid=hashM[1],tok=hashM[2];
+  const sid=hashM[2],tok=hashM[3];
   if(Date.now()-ST.loadedAt>5*60*1000){ST.step='bad';ST.msg='انتهت مهلة الصفحة. امسح الرمز مرة أخرى.';return renderStudent()}
-  const k='dev_'+sid;let prev=null;try{prev=localStorage.getItem(k)}catch(e){}
+  const k='dev_'+hashM[1]+'_'+sid;let prev=null;try{prev=localStorage.getItem(k)}catch(e){}
   if(prev&&prev!==ST.who.id){ST.msg='سُجّل حضور طالب آخر من هذا الجهاز لهذه المحاضرة.';return renderStudent()}
   try{
-    await setDoc(doc(db,'checkins',sid+'_'+ST.who.id),{sid,id:ST.who.id,t:serverTimestamp(),token:tok});
+    await setDoc(sref('checkins',sid+'_'+ST.who.id),{sid,id:ST.who.id,t:serverTimestamp(),token:tok});
     try{localStorage.setItem(k,ST.who.id)}catch(e){}
     ST.step='done';renderStudent();
   }catch(e){
-    let closed=false;try{const d=await getDoc(doc(db,'sessions',sid));closed=!d.exists()||d.data().status!=='open'}catch(_){}
+    let closed=false;try{const d=await getDoc(sref('sessions',sid));closed=!d.exists()||d.data().status!=='open'}catch(_){}
     ST.msg=closed?'تم إغلاق تسجيل الحضور لهذه المحاضرة.':'لم يُقبل التسجيل: إما انتهت صلاحية الرمز (امسح الرمز الحالي من الشاشة) أو أن هذا الرقم مسجّل مسبقاً.';
     renderStudent();
   }
 }
 
-/* ---------- export ---------- */
-function downloadCSV(name,aoa){
-  const csv='\ufeff'+aoa.map(r=>r.map(c=>{c=c==null?'':String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-}
-function downloadXLSX(name,sheets){
-  if(typeof XLSX==='undefined')return toast('مكتبة Excel لم تُحمَّل. جرّب تنزيل CSV');
-  const wb=XLSX.utils.book_new();
-  sheets.forEach(([n,aoa,w])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=(w||aoa[0].map(()=>16)).map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n)});
-  wb.Workbook={Views:[{RTL:true}]};XLSX.writeFile(wb,name);
-}
-function sessionExport(){
-  const {s,r}=cur();const head=['#','الرقم الجامعي','الاسم','الشعبة الرسمية (النظام)','شعبة المامو الأصلية','الحالة','المصدر','وقت التسجيل بالرمز','حضر بقاعة غير قاعته','عدد الغياب المرحّل','نسبة الغياب % (من '+LECT_WEEKS+')','التاريخ','اليوم','الأسبوع','قاعة الجلسة','مامو الجلسة','حالة الجلسة'];
-  const rows=sessionRows(s.sec,r.draft).map((x,i)=>{const st=stat(x.id);const src=r.src[x.id];const tm=(r.times||{})[x.id];
-    return [i+1,x.id,x.name,x.off,x.mam,r.draft[x.id]==='A'?'غائب':'حاضر',src==='qr'?'رمز QR':src==='m'?'يدوي':'',tm?clock(tm):'',x.mam!==s.sec?'نعم':'',st.a,+st.pct.toFixed(2),fmtDate(s.date),dayName(s.date),weekNo(s.date),ROOMS[s.sec],s.sec,r.final?(isDirty(r)?'مرحّل مع تعديلات غير مرحّلة':'مرحّل'):'مسودة']});
-  const all=sessionRows(s.sec,r.draft);const cnt=(f)=>all.filter(f).length;const A=x=>r.draft[x.id]==='A';
-  const sum=[['البند','القيمة'],['المساق',COURSE.code+' '+COURSE.name],['التاريخ',fmtDate(s.date)+' ('+dayName(s.date)+')'],['الأسبوع',weekNo(s.date)+' من '+LECT_WEEKS],['شعبة المامو / القاعة',s.sec+' / '+ROOMS[s.sec]],['إجمالي الطلاب في القائمة',all.length],['حاضر',cnt(x=>!A(x))],['غائب',cnt(A)],
-    ['حاضر من الشعبة الرسمية 1',cnt(x=>!A(x)&&x.off===1)],['غائب من الشعبة الرسمية 1',cnt(x=>A(x)&&x.off===1)],['حاضر من الشعبة الرسمية 2',cnt(x=>!A(x)&&x.off===2)],['غائب من الشعبة الرسمية 2',cnt(x=>A(x)&&x.off===2)],
-    ['حضروا بقاعة غير قاعتهم',cnt(x=>x.mam!==s.sec)],['سُجّلوا بالرمز',cnt(x=>r.src[x.id]==='qr')],['سُجّلوا يدوياً',cnt(x=>r.src[x.id]==='m')]];
-  return{head,rows,sum,name:`attendance_${s.date}_mamo${s.sec}`};
-}
-function officialExport(sec){
-  const b=sundayOf(V.offDate);const head=['#','الرقم الجامعي','الاسم','الشعبة الرسمية (النظام)','شعبة المامو','حالة الأسبوع','عدد الغياب الكلي','نسبة الغياب % (من '+LECT_WEEKS+')','الأسبوع','من','إلى'];
-  const rows=students().filter(s=>s.off===sec).sort((a,c)=>a.oi-c.oi||a.id-c.id).map((s,i)=>{const st=status(b,s.id);const t=stat(s.id);
-    return [i+1,s.id,s.name,s.off,s.mam,st==='A'?'غائب':st==='P'?'حاضر':'غير مسجّل',t.a,+t.pct.toFixed(2),weekNo(b),fmtDate(b),fmtDate(addDays(b,6))]});
-  return{head,rows};
-}
-
 /* ---------- events ---------- */
+async function afterCourseChange(){renderAll()}
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b||b.tagName==='INPUT')return;const a=b.dataset.act;
   switch(a){
    case'theme':cycleTheme();break;
    case'refresh':try{await loadAll();renderAll();toast('تم تحديث البيانات')}catch(e){toast('تعذّر التحديث')}break;
-   case'wk':{const w=+b.dataset.w;V.date=addDays(weekStart(w),V.sec===1?2:0);V.offDate=weekStart(w);renderAll();toast(`الأسبوع ${w}: ${dayName(V.date)} ${fmtDate(V.date)}`);break}
-   case'xs':{const e=sessionExport();downloadXLSX(e.name+'.xlsx',[['الحضور',[e.head,...e.rows],[5,14,34,16,16,10,12,14,16,14,18,12,10,8,12,10,22]],['ملخص',e.sum,[34,36]]]);break}
-   case'cs':{const e=sessionExport();downloadCSV(e.name+'.csv',[e.head,...e.rows]);break}
-   case'xo':{const b0=sundayOf(V.offDate);const sh=[1,2].map(s=>{const e=officialExport(s);return['شعبة رسمية '+s,[e.head,...e.rows],[5,14,34,16,14,14,14,18,8,12,12]]});downloadXLSX(`system_absence_week${weekNo(b0)}.xlsx`,sh);break}
-   case'co':{const e=officialExport(V.offSec);downloadCSV(`system_absence_week${weekNo(sundayOf(V.offDate))}_sec${V.offSec}.csv`,[e.head,...e.rows]);break}
-   case'admadd':{const m=($('#a-mail').value||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(m))return toast('اكتب بريداً صحيحاً');if(ADMINS.includes(m)||m===OWNER)return toast('هذا البريد موجود');
-     ADMINS=[...ADMINS,m];try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('تمت إضافة المشرف')}catch(e){ADMINS=ADMINS.filter(x=>x!==m);toast('تعذّر الحفظ: تأكد من نشر القواعد الجديدة')}renderAll();break}
-   case'admdel':{const m=b.dataset.e;const old=ADMINS;ADMINS=ADMINS.filter(x=>x!==m);try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('أُزيل المشرف')}catch(e){ADMINS=old;toast('تعذّر الحفظ')}renderAll();break}
    case'logout':stopLive();watchCheckins(null);await signOut(auth);break;
    case'tab':V.tab=b.dataset.v;renderAll();break;
-   case'sec':V.sec=+b.dataset.v;renderAll();break;
-   case'osec':V.offSec=+b.dataset.v;renderAll();break;
    case'startqr':ensureSession('open');break;
    case'startman':ensureSession('closed');break;
-   case'pick':V.sid=b.dataset.sid;V.q='';V.confirmDel=false;{const s=S.sessions[V.sid];V.date=s.date;V.sec=s.sec}watchCheckins(V.sid);renderAll();break;
+   case'pick':V.sid=b.dataset.sid;V.q='';V.confirmDel=false;{const s=S.sessions[V.sid];V.date=s.date;V.sec=s.sec;V.custom=false}watchCheckins(V.sid);renderAll();break;
+   case'wk':{const w=+b.dataset.w;V.date=addDays(weekStart(w),(CC.mam.find(x=>x.n===V.sec)||{day:0}).day||0);V.custom=false;V.offWeek=w;renderAll();toast(`الأسبوع ${w}: ${dayName(V.date)} ${fmtDate(V.date)}`);break}
    case'close':closeQR();break;
    case'reopen':reopenQR();break;
    case'commit':commit();break;
@@ -574,20 +743,55 @@ document.addEventListener('click',async e=>{
    case'delok':removeSession();break;
    case'addv':addVisitor(+b.dataset.id);break;
    case'demo':{const {s}=cur();const pool=students().filter(x=>x.mam===s.sec).sort(()=>Math.random()-.5).slice(0,20);
-     for(const x of pool)await setDoc(doc(db,'checkins',V.sid+'_'+x.id),{sid:V.sid,id:String(x.id),t:serverTimestamp(),token:live.cur||'demo'}).catch(()=>{});
+     for(const x of pool)await setDoc(cref('checkins',V.sid+'_'+x.id),{sid:V.sid,id:String(x.id),t:serverTimestamp(),token:live.cur||'demo'}).catch(()=>{});
      toast('أُضيف 20 تسجيل تجريبي. احذف الجلسة بعد التجربة.');break}
-   case'oprev':V.offDate=addDays(sundayOf(V.offDate),-7);renderAll();break;
-   case'onext':V.offDate=addDays(sundayOf(V.offDate),7);renderAll();break;
-   case'copyabs':{const bk=sundayOf(V.offDate);const ids=students().filter(s=>s.off===V.offSec&&status(bk,s.id)==='A').sort((x,y)=>x.oi-y.oi).map(s=>s.id);
+   case'xs':{const e=sessionExport();downloadXLSX(e.name+'.xlsx',[['الحضور',[e.head,...e.rows],[5,14,34,16,16,10,12,14,16,14,18,12,10,8,12,10,22]],['ملخص',e.sum,[34,36]]]);break}
+   case'cs':{const e=sessionExport();downloadCSV(e.name+'.csv',[e.head,...e.rows]);break}
+   case'xo':{const sh=CC.off.map(o=>{const e=officialExport(o.n);return['شعبة رسمية '+o.n,[e.head,...e.rows],[5,14,34,16,14,14,14,18,8,12,12]]});downloadXLSX(fn(`system_week${V.offWeek}.xlsx`),sh);break}
+   case'co':{const e=officialExport(V.offSec);downloadCSV(fn(`system_week${V.offWeek}_sec${V.offSec}.csv`),[e.head,...e.rows]);break}
+   case'xr':{const R=fullReport();downloadXLSX(fn('full_report.xlsx'),[['سجل الحركات',[R.logHead,...R.log],[12,10,8,10,10,14,34,10,12,8,10,10,10,10]],['مصفوفة الجلسات',[R.mh,...R.mat]],['كشف النظام الأسبوعي',[R.wh,...R.wk]]]);break}
+   case'cr':{const R=fullReport();downloadCSV(fn('all_movements.csv'),[R.logHead,...R.log]);break}
+   case'lpick':V.lid=+b.dataset.id;V.lq=STU.get(V.lid).name;renderAll();break;
+   case'copyabs':{const bk=weekStart(V.offWeek);const ids=students().filter(s=>s.off===V.offSec&&status(bk,s.id)==='A').sort((x,y)=>x.oi-y.oi).map(s=>s.id);
      const txt=ids.join('\n');V.copy=null;
      try{await navigator.clipboard.writeText(txt);toast(ids.length?`نُسخ ${ids.length} رقم`:'لا يوجد غائبون')}catch(_){V.copy=txt;renderAll();const t=$('#copybox');if(t){t.focus();t.select()}}break}
    case'mdel':V.mdel=+b.dataset.id;renderAll();break;
-   case'mdelok':{const id=+b.dataset.id;STU.delete(id);V.mdel=null;renderAll();deleteDoc(doc(db,'roster',String(id))).catch(()=>toast('تعذّر الحذف'));break}
+   case'mdelok':{const id=+b.dataset.id;STU.delete(id);V.mdel=null;renderAll();deleteDoc(cref('students',String(id))).catch(()=>toast('تعذّر الحذف'));break}
    case'madd':{const id=+($('#n-id').value||'').replace(/\D/g,'');const name=$('#n-name').value.trim();
      if(!id||!name)return toast('اكتب الرقم الجامعي والاسم');if(STU.has(id))return toast('هذا الرقم موجود مسبقاً');
      const off=+$('#n-off').value,mam=+$('#n-mam').value;const all=students();
      const s={id,name,off,mam,oi:Math.max(0,...all.filter(x=>x.off===off).map(x=>x.oi))+1,mi:Math.max(0,...all.filter(x=>x.mam===mam).map(x=>x.mi))+1};
      STU.set(id,s);saveStudent(s);renderAll();toast('تمت الإضافة');break}
+   case'cnew':V.cf=emptyCourse();renderAll();break;
+   case'cedit':{const c=COURSES.get(b.dataset.id);V.cf=JSON.parse(JSON.stringify(courseData(c)));V.cf.id=c.id;renderAll();break}
+   case'ccancel':V.cf=null;renderAll();break;
+   case'cadd':{const g=b.dataset.g;const c=V.cf;
+     if(g==='off')c.off.push({n:Math.max(0,...c.off.map(x=>x.n))+1,day:2});
+     else if(g==='mam')c.mam.push({n:Math.max(0,...c.mam.map(x=>x.n))+1,room:'',day:2});
+     else c.exams.push({label:'',from:c.termStart,to:c.termStart});renderAll();break}
+   case'cadel':{V.cf[b.dataset.g].splice(+b.dataset.i,1);renderAll();break}
+   case'csave':{const c=V.cf;
+     c.code=String(c.code).trim();c.name=String(c.name).trim();c.lectureWeeks=+c.lectureWeeks;c.totalWeeks=+c.totalWeeks;c.absLimit=+c.absLimit;
+     c.off.forEach(o=>{o.n=+o.n;o.day=+o.day});c.mam.forEach(o=>{o.n=+o.n;o.day=+o.day});
+     if(!c.code||!c.name)return toast('اكتب رمز المساق واسمه');
+     if(!c.termStart||parse(c.termStart).getDay()!==0)return toast('أول يوم تدريس لازم يكون يوم أحد');
+     if(!(c.lectureWeeks>0)||!(c.totalWeeks>=c.lectureWeeks))return toast('تحقق من عدد الأسابيع');
+     if(!c.off.length||!c.mam.length)return toast('أضف شعبة رسمية ومجموعة قاعة واحدة على الأقل');
+     const dup=a=>new Set(a.map(x=>x.n)).size!==a.length||a.some(x=>!(x.n>0));
+     if(dup(c.off)||dup(c.mam))return toast('أرقام الشعب لازم تكون موجبة وغير مكررة');
+     const isNew=!c.id;if(isNew)c.id='c'+rand().slice(0,5);
+     await saveCourse(c);COURSES.set(c.id,{...c});V.cf=null;
+     if(isNew||c.id===V.cid){await selectCourse(c.id)}
+     if(isNew)V.tab='man';
+     toast('تم حفظ المساق');renderAll();break}
+   case'cdel':V.cdel=b.dataset.id;renderAll();break;
+   case'cdelok':{const id=b.dataset.id;V.cdel=null;toast('جارٍ الحذف...');
+     try{for(const n of['students','sessions','records','tokens','checkins'])await wipe('courses',id,n);await deleteDoc(doc(db,'courses',id));COURSES.delete(id);
+       if(V.cid===id){const nx=COURSES.size?[...COURSES.keys()][0]:null;await selectCourse(nx)}toast('تم حذف المساق')}catch(e){console.error(e);toast('تعذّر الحذف')}renderAll();break}
+   case'legacy':legacyImport();break;
+   case'admadd':{const m=($('#a-mail').value||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(m))return toast('اكتب بريداً صحيحاً');if(ADMINS.includes(m)||m===OWNER)return toast('هذا البريد موجود');
+     ADMINS=[...ADMINS,m];try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('تمت إضافة المشرف')}catch(e){ADMINS=ADMINS.filter(x=>x!==m);toast('تعذّر الحفظ: تأكد من نشر القواعد الجديدة')}renderAll();break}
+   case'admdel':{const m=b.dataset.e;const old=ADMINS;ADMINS=ADMINS.filter(x=>x!==m);try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('أُزيل المشرف')}catch(e){ADMINS=old;toast('تعذّر الحفظ')}renderAll();break}
    case'lookup':stuLookup();break;
    case'back':ST.step='id';ST.msg='';renderStudent();break;
    case'confirm':stuConfirm();break;
@@ -596,9 +800,15 @@ document.addEventListener('click',async e=>{
 document.addEventListener('change',async e=>{
   const t=e.target;
   if(t.dataset.act==='tg'){setMark(+t.dataset.id,t.checked);refreshRows();return}
+  if(t.dataset.cf){const k=t.dataset.cf;V.cf[k]=t.type==='number'?+t.value:t.value;return}
+  if(t.dataset.ca){const g=V.cf[t.dataset.ca][+t.dataset.i];const k=t.dataset.k;g[k]=(t.type==='number'||k==='day')?+t.value:t.value;return}
   const f=t.dataset.f;if(!f)return;
-  if(f==='date'){V.date=t.value||today();renderAll()}
-  else if(f==='offDate'){V.offDate=t.value||today();renderAll()}
+  if(f==='course'){await selectCourse(t.value);renderAll()}
+  else if(f==='sec'){V.sec=+t.value;V.custom=false;V.date=defaultDate(V.sec);renderAll()}
+  else if(f==='dsel'){if(t.value==='custom'){V.custom=true}else{V.custom=false;V.date=t.value}renderAll()}
+  else if(f==='date'){V.date=t.value||today();V.custom=true;renderAll()}
+  else if(f==='offSec'){V.offSec=+t.value;renderAll()}
+  else if(f==='offWeek'){V.offWeek=+t.value;renderAll()}
   else if(f==='onlyAbs'){V.onlyAbs=t.checked;renderAll()}
   else if(f==='mdiff'){V.mdiff=t.checked;renderAll()}
   else if(f==='mname'){const s=STU.get(+t.dataset.id);s.name=t.value.trim()||s.name;saveStudent(s);toast('تم الحفظ')}
@@ -606,18 +816,17 @@ document.addEventListener('change',async e=>{
     if(f==='moff'){s.off=v;s.oi=Math.max(0,...all.filter(x=>x.off===v&&x!==s).map(x=>x.oi))+1}
     else{s.mam=v;s.mi=Math.max(0,...all.filter(x=>x.mam===v&&x!==s).map(x=>x.mi))+1}
     saveStudent(s);toast('تم نقل الطالب');renderAll()}
-  else if(f==='import'){const file=t.files[0];if(!file)return;
-    try{const arr=JSON.parse(await file.text());const batch=writeBatch(db);
-      arr.forEach(r=>{batch.set(doc(db,'roster',String(r[0])),{name:r[1],off:r[2],mam:r[3],oi:r[4],mi:r[5]});STU.set(r[0],{id:r[0],name:r[1],off:r[2],mam:r[3],oi:r[4],mi:r[5]})});
-      await batch.commit();toast(`تم استيراد ${arr.length} طالب`);renderAll()}catch(err){console.error(err);toast('تعذّر الاستيراد: تحقق من الملف والصلاحيات')}}
+  else if(f==='import'){const files=[...t.files];if(!files.length)return;const kind=$('#i-kind').value;
+    try{await importFiles(files,kind)}catch(err){console.error(err);toast('تعذّر قراءة الملف')}t.value=''}
 });
 document.addEventListener('input',e=>{
   const f=e.target.dataset.f;
   if(f==='q'){V.q=e.target.value;refreshRows()}
-  else if(f==='mq'){V.mq=e.target.value;const m=$('#mrows');renderAll()}
+  else if(f==='mq'){V.mq=e.target.value;renderAll()}
+  else if(f==='lq'){V.lq=e.target.value;V.lid=null;renderAll()}
   else if(f==='addq'){V.addq=e.target.value;const c=cur();const q=V.addq.trim();const box=$('#res');
     const res=q?students().filter(x=>!(x.id in c.r.draft)&&(x.name.includes(q)||String(x.id).includes(q))).slice(0,8):[];
-    box.hidden=!res.length;box.innerHTML=res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مامو ${x.mam}</span></button>`).join('')}
+    box.hidden=!res.length;box.innerHTML=res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مجموعة ${x.mam}</span></button>`).join('')}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='sid-in')stuLookup()});
 document.addEventListener('submit',async e=>{
@@ -634,10 +843,10 @@ else{
   renderLogin();
   onAuthStateChanged(auth,async u=>{
     USER=u;IS_OWNER=!!(u&&u.email&&OWNER&&u.email.toLowerCase()===OWNER);
-    if(!u){stopLive();renderLogin();return}
+    if(!u){stopLive();watchCheckins(null);renderLogin();return}
     $('#app').innerHTML='<div class="stu"><p class="muted center">جارٍ تحميل البيانات...</p></div>';
-    try{await loadAll();const d=doneBuckets();V.offDate=d.length?d[d.length-1]:today();renderAll()}
-    catch(e){console.error(e);$('#app').innerHTML='<div class="stu"><div class="err">تعذّر تحميل البيانات. تأكد أن قواعد Firestore منشورة وأن بريدك هو بريد المدرّس في القواعد.</div><button class="theme" data-act="logout">خروج</button></div>'}
+    try{await loadAll();renderAll()}
+    catch(e){console.error(e);$('#app').innerHTML='<div class="stu"><div class="err">تعذّر تحميل البيانات. تأكد أن قواعد Firestore الجديدة منشورة وأن بريدك مسجّل كمالك أو مشرف.</div><button class="theme" data-act="logout">خروج</button></div>'}
   });
 }
 </script>
