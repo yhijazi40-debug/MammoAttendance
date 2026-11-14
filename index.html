@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>حضور شع331</title>
+<title>حضور مساق تصوير الثدي بالأشعة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
@@ -109,6 +109,13 @@ textarea.copy{width:100%;min-height:110px;font:13px monospace;direction:ltr;back
 .err{background:var(--bad-soft);color:var(--bad);padding:10px 14px;border-radius:8px;font-size:14px}
 .center{text-align:center}
 .theme{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px}
+.wk{font:inherit;display:flex;flex-direction:column;align-items:center;gap:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 2px;cursor:pointer;font-size:12px;line-height:1.35;position:relative}
+.wk b{font-size:15px;font-variant-numeric:tabular-nums}
+.wk.past{background:var(--tint)} .wk.cur{border:2px solid var(--accent);background:var(--accent-soft)}
+.wk.ex::after{content:"";position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:var(--warn)}
+.wk.rec span.ck{color:var(--on);font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -116,13 +123,21 @@ textarea.copy{width:100%;min-height:110px;font:13px monospace;direction:ltr;back
 <div class="wrap" id="app"></div>
 <div id="toast" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
-import {firebaseConfig} from './firebase-config.js';
+import * as CFG from './firebase-config.js';
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,query,where,onSnapshot,serverTimestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
+const firebaseConfig=CFG.firebaseConfig;
+const OWNER=String(CFG.ownerEmail||'').toLowerCase();
 const COURSE={code:'شع331',name:'تصوير الثدي بالأشعة',term:'الفصل الأول 2026-2027'};
+const TITLE='حضور مساق '+COURSE.name;
+const ROOMS={1:'M4202',2:'LAB'};
+/* التقويم الجامعي 2026-2027 (الفصل الأول): بدء التدريس الأحد 11/10، 15 أسبوع محاضرات، 17 أسبوعاً مع النهائيات */
+const TERM_START='2026-10-11',LECT_WEEKS=15,TOTAL_WEEKS=17,ABS_LIMIT=0.2;
+const EXAMS=[['2026-11-07','2026-11-21','الامتحان الأول'],['2026-11-29','2026-12-10','الامتحان النصفي'],['2026-12-12','2026-12-26','الامتحان الثاني'],['2027-01-16','2027-01-21','النهائي العملي'],['2027-01-23','2027-02-06','النهائي النظري']];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const configured=!!(firebaseConfig&&firebaseConfig.apiKey&&!String(firebaseConfig.apiKey).startsWith('PASTE'));
@@ -144,6 +159,12 @@ const sidOf=(date,sec)=>`d${date.replace(/-/g,'')}s${sec}`;
 const dateOfSid=sid=>{const m=/^d(\d{4})(\d{2})(\d{2})s/.exec(sid);return `${m[1]}-${m[2]}-${m[3]}`};
 const rand=()=>{const a=new Uint8Array(6);crypto.getRandomValues(a);return [...a].map(x=>(x%36).toString(36)).join('')};
 const PERIOD=60; // seconds, fixed
+const dayDiff=(a,b)=>Math.round((parse(a)-parse(b))/86400000);
+const weekNo=d=>Math.floor(dayDiff(d,TERM_START)/7)+1;
+const weekStart=n=>addDays(TERM_START,(n-1)*7);
+const examOf=n=>{const s=weekStart(n),e=addDays(s,6);const x=EXAMS.find(x=>x[0]<=e&&x[1]>=s);return x?x[2]:''};
+function termStats(){const t=today();const w=weekNo(t);let E=0;for(let k=1;k<=LECT_WEEKS;k++)if(addDays(weekStart(k),6)<=t)E++;
+  const cur=(w>=1&&w<=LECT_WEEKS&&E<w)?w:null;return{w,E,cur,R:Math.max(0,LECT_WEEKS-E-(cur?1:0))}}
 function themeLabel(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}catch(e){}return t==='light'?'الوضع: فاتح':t==='dark'?'الوضع: داكن':'الوضع: تلقائي'}
 function cycleTheme(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}catch(e){}const n=t==='auto'?'light':t==='light'?'dark':'auto';
   try{localStorage.setItem('theme',n)}catch(e){}
@@ -153,10 +174,10 @@ function cycleTheme(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}c
 /* ---------- state ---------- */
 const STU=new Map();            // id -> {id,name,off,mam,oi,mi}
 const S={sessions:{},records:{}}; // sid -> {date,sec,status} / {draft,src,final,committedAt}
-let USER=null;
+let USER=null,IS_OWNER=false,ADMINS=[];
 let watched={sid:null,unsub:null,list:[]};
 const chains={},timers={};
-const V={tab:'rec',date:today(),sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offDate:today(),confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null};
+const V={adm:'',tab:'rec',date:today(),sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offDate:today(),confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null};
 const hashM=/^#c-(d\d{8}s[12])-([a-z0-9]+)$/.exec(location.hash||'');
 const isStudent=!!hashM;
 const students=()=>[...STU.values()];
@@ -165,7 +186,7 @@ const cur=()=>V.sid?{s:S.sessions[V.sid],r:S.records[V.sid]}:null;
 /* ---------- firestore wrappers ---------- */
 function queue(key,fn){chains[key]=(chains[key]||Promise.resolve()).then(fn).catch(e=>{console.error(e);toast('تعذّر الحفظ: تحقق من الاتصال والصلاحيات')});return chains[key]}
 const saveSession=sid=>queue('s'+sid,()=>{const s=S.sessions[sid];return setDoc(doc(db,'sessions',sid),{date:s.date,sec:s.sec,status:s.status,openedAt:s.openedAt||Date.now()})});
-const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid];return setDoc(doc(db,'records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},final:r.final||null,committedAt:r.committedAt||null})});
+const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid];return setDoc(doc(db,'records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},times:r.times||{},final:r.final||null,committedAt:r.committedAt||null})});
 const saveRecordSoon=sid=>{clearTimeout(timers[sid]);timers[sid]=setTimeout(()=>saveRecord(sid),500)};
 const saveStudent=s=>queue('t'+s.id,()=>setDoc(doc(db,'roster',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi}));
 async function loadAll(){
@@ -175,6 +196,7 @@ async function loadAll(){
   s.forEach(d=>{S.sessions[d.id]=d.data()});
   c.forEach(d=>{S.records[d.id]=d.data()});
   idxDirty=true;
+  try{const a=await getDoc(doc(db,'config','admins'));ADMINS=a.exists()?(a.data().emails||[]):[]}catch(e){ADMINS=[]}
 }
 function watchCheckins(sid){
   if(watched.sid===sid)return;
@@ -197,7 +219,7 @@ function idx(){
 }
 function status(b,id){const arr=idx().get(b);if(!arr)return;let res;for(const f of arr){if(id in f){if(f[id]==='P')return'P';res='A'}}return res}
 const doneBuckets=()=>[...idx().keys()].sort();
-function stat(id){let a=0,t=0;for(const b of idx().keys()){const st=status(b,id);if(st){t++;if(st==='A')a++}}return{a,t,pct:t?a/t*100:0}}
+function stat(id){let a=0,t=0;for(const b of idx().keys()){const st=status(b,id);if(st){t++;if(st==='A')a++}}return{a,t,pct:a/LECT_WEEKS*100}}
 function sessionRows(sec,draft){
   const ids=new Set(students().filter(s=>s.mam===sec).map(s=>s.id));
   Object.keys(draft||{}).forEach(k=>ids.add(+k));
@@ -214,14 +236,15 @@ async function ensureSession(status){
   S.sessions[sid]={date:V.date,sec:V.sec,status,openedAt:Date.now()};
   const draft={};
   if(status==='closed')students().filter(s=>s.mam===V.sec).forEach(s=>draft[s.id]='A');
-  S.records[sid]={date:V.date,sec:V.sec,draft,src:{},final:null,committedAt:null};
+  S.records[sid]={date:V.date,sec:V.sec,draft,src:{},times:{},final:null,committedAt:null};
   V.sid=sid;V.q='';watchCheckins(sid);renderAll();
   await saveSession(sid);await saveRecord(sid);
 }
 async function closeQR(){
   const {s,r}=cur();
   if(!Object.keys(r.draft).length)students().filter(x=>x.mam===s.sec).forEach(x=>r.draft[x.id]='A');
-  watched.list.forEach(c=>{if(r.src[c.id]!=='m'){r.draft[c.id]='P';r.src[c.id]='qr'}});
+  r.times=r.times||{};
+  watched.list.forEach(c=>{r.times[c.id]=c.t;if(r.src[c.id]!=='m'){r.draft[c.id]='P';r.src[c.id]='qr'}});
   s.status='closed';stopLive();renderAll();
   await queue('tok'+V.sid,()=>setDoc(doc(db,'tokens',V.sid),{valid:[]}));
   await saveSession(V.sid);await saveRecord(V.sid);
@@ -276,14 +299,26 @@ function chipsHtml(){
   const arr=Object.entries(S.sessions).sort((a,b)=>b[1].date.localeCompare(a[1].date)||a[1].sec-b[1].sec);
   if(!arr.length)return'<span class="muted small">لا توجد جلسات بعد. اختر التاريخ والشعبة ثم ابدأ.</span>';
   return arr.map(([sid,s])=>{const r=S.records[sid]||{};const cls=s.status==='open'?'open':r.final&&!isDirty(r)?'done':'draft';
-    return `<button class="chip" data-act="pick" data-sid="${sid}" aria-pressed="${V.sid===sid}"><i class="dot ${cls}"></i>${dayName(s.date)} ${fmtDate(s.date).slice(0,5)} · مامو ${s.sec}</button>`}).join('');
+    return `<button class="chip" data-act="pick" data-sid="${sid}" aria-pressed="${V.sid===sid}"><i class="dot ${cls}"></i>${dayName(s.date)} ${fmtDate(s.date).slice(0,5)} · مامو ${s.sec} · أ${weekNo(s.date)}</button>`}).join('');
+}
+function termHtml(){
+  const ts=termStats();const done=new Set(doneBuckets());
+  const cells=Array.from({length:LECT_WEEKS},(_,i)=>i+1).map(k=>{const st=weekStart(k);const ex=examOf(k);const past=addDays(st,6)<=today();
+    const has=Object.values(S.sessions).some(s=>weekNo(s.date)===k);
+    const cls=['wk',past?'past':'',ts.cur===k?'cur':'',ex?'ex':''].join(' ');
+    return `<button class="${cls}" data-act="wk" data-w="${k}" title="${ex?ex+' · ':''}${fmtDate(st)}"><b>${k}</b><span>${fmtDate(st).slice(0,5)}</span><span class="ck">${done.has(st)?'✓':has?'•':'&nbsp;'}</span></button>`}).join('');
+  const lim=Math.floor(LECT_WEEKS*ABS_LIMIT);
+  return `<section class="card col"><div class="row" style="justify-content:space-between;align-items:center"><h2>الفصل الدراسي</h2>
+   <span class="small muted">${ts.w>=1&&ts.w<=TOTAL_WEEKS?'اليوم في الأسبوع '+ts.w:ts.w<1?'لم يبدأ التدريس':'انتهت أسابيع الفصل'} · مضى ${ts.E} من ${LECT_WEEKS}${ts.cur?' · الحالي '+ts.cur:''} · المتبقي ${ts.R}</span></div>
+   <div class="weeks">${cells}</div>
+   <div class="legend small muted"><span>✓ مرحّل</span><span>• مسودة أو مفتوح</span><span><i class="dot" style="background:var(--warn)"></i>أسبوع فيه امتحانات</span><span>الحد الأقصى للغياب ${lim} من ${LECT_WEEKS} محاضرات (${ABS_LIMIT*100}%)</span></div></section>`;
 }
 function pickerHtml(){
   const sid=sidOf(V.date,V.sec),ex=S.sessions[sid];
   return `<section class="card col">
   <div class="row">
     <div class="field"><label for="f-date">تاريخ المحاضرة</label><input id="f-date" type="date" value="${V.date}" data-f="date"></div>
-    <div class="field"><label>شعبة المامو (القاعة)</label><div class="seg" role="group"><button data-act="sec" data-v="1" aria-pressed="${V.sec===1}">1 · M4202</button><button data-act="sec" data-v="2" aria-pressed="${V.sec===2}">2 · M3306</button></div></div>
+    <div class="field"><label>شعبة المامو (القاعة)</label><div class="seg" role="group"><button data-act="sec" data-v="1" aria-pressed="${V.sec===1}">1 · ${ROOMS[1]}</button><button data-act="sec" data-v="2" aria-pressed="${V.sec===2}">2 · ${ROOMS[2]}</button></div></div>
     <button class="btn primary" data-act="startqr">${ex?'فتح الجلسة':'ابدأ بالرمز'}</button>
     ${ex?'':'<button class="btn ghost" data-act="startman">تسجيل يدوي بدون رمز</button>'}
   </div>
@@ -323,15 +358,15 @@ function editHtml(){
   const res=q?students().filter(x=>!(x.id in r.draft)&&(x.name.includes(q)||String(x.id).includes(q))).slice(0,8):[];
   return `<section class="card col">
    <div class="row" style="justify-content:space-between;align-items:center">
-     <div><h2>قائمة الطلاب · ${dayName(s.date)} ${fmtDate(s.date)} · مامو ${s.sec}</h2><div class="small muted">المفعّل (الأخضر) = غياب</div></div>
-     <div class="row" style="align-items:center"><span class="pill" id="cnt">${counts(r)}</span><button class="btn ghost" data-act="reopen">فتح الرمز</button></div>
+     <div><h2>قائمة الطلاب · ${dayName(s.date)} ${fmtDate(s.date)} · مامو ${s.sec} (${ROOMS[s.sec]}) · الأسبوع ${weekNo(s.date)}</h2><div class="small muted">المفعّل (الأخضر) = غياب</div></div>
+     <div class="row" style="align-items:center"><span class="pill" id="cnt">${counts(r)}</span><button class="btn ghost sm" data-act="xs">تنزيل Excel</button><button class="btn ghost sm" data-act="cs">تنزيل CSV</button><button class="btn ghost" data-act="reopen">فتح الرمز</button></div>
    </div>
    <div class="row">
      <div class="field" style="flex:1;min-width:180px"><label for="f-q">بحث في القائمة</label><input id="f-q" type="search" value="${esc(V.q)}" placeholder="الاسم أو الرقم الجامعي" data-f="q"></div>
      <div class="field pop" style="flex:1;min-width:200px"><label for="f-add">إضافة طالب من شعبة أخرى كحاضر</label><input id="f-add" type="search" value="${esc(V.addq)}" placeholder="ابحث بالاسم أو الرقم" data-f="addq" autocomplete="off">
        <div class="results" id="res" ${res.length?'':'hidden'}>${res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مامو ${x.mam}</span></button>`).join('')}</div></div>
    </div>
-   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">المصدر</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة %</th></tr></thead><tbody id="rows">${rowsHtml(s,r)}</tbody></table></div>
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">المصدر</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة % (من ${LECT_WEEKS})</th></tr></thead><tbody id="rows">${rowsHtml(s,r)}</tbody></table></div>
    <div class="row"><button class="btn danger" data-act="${V.confirmDel?'delok':'del'}">${V.confirmDel?'تأكيد حذف الجلسة نهائياً':'حذف الجلسة'}</button>${V.confirmDel?'<button class="btn ghost" data-act="delno">تراجع</button>':''}</div>
   </section>
   <div class="bar"><div class="in"><span class="small" id="cstate">${stateText(r)}</span><button class="btn primary" data-act="commit" id="cbtn" ${isDirty(r)?'':'disabled'}>${r.final?'ترحيل التعديلات':'ترحيل الحضور'}</button></div></div>`;
@@ -360,12 +395,12 @@ function officialHtml(){
     <div class="field"><label for="f-od">أي تاريخ من الأسبوع</label><input id="f-od" type="date" value="${V.offDate}" data-f="offDate"></div>
     <button class="btn ghost" data-act="oprev">الأسبوع السابق</button><button class="btn ghost" data-act="onext">الأسبوع التالي</button>
    </div>
-   <div class="row" style="align-items:center"><span class="pill">الأسبوع من ${fmtDate(b)} إلى ${fmtDate(addDays(b,6))}</span>
+   <div class="row" style="align-items:center"><span class="pill">الأسبوع ${weekNo(b)} · من ${fmtDate(b)} إلى ${fmtDate(addDays(b,6))}</span>
     <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-oa" data-f="onlyAbs" ${V.onlyAbs?'checked':''}> الغائبون فقط</label>
-    <button class="btn primary" data-act="copyabs" style="margin-inline-start:auto">نسخ أرقام الغائبين (${abs.length})</button></div>
+    <span style="margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-act="xo">تنزيل Excel</button><button class="btn ghost sm" data-act="co">تنزيل CSV</button><button class="btn primary" data-act="copyabs">نسخ أرقام الغائبين (${abs.length})</button></span></div>
    ${info}
    ${V.copy?`<div class="field"><label>حدّد النص وانسخه</label><textarea class="copy" id="copybox" readonly>${esc(V.copy)}</textarea></div>`:''}
-   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">شعبة المامو</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة %</th></tr></thead><tbody>${body}</tbody></table></div>
+   <div class="tbl"><table><thead><tr><th class="num hm">#</th><th class="num">الرقم الجامعي</th><th>الاسم</th><th class="num">غياب</th><th class="hm">شعبة المامو</th><th class="num hm">عدد الغياب</th><th class="num hm">النسبة % (من ${LECT_WEEKS})</th></tr></thead><tbody>${body}</tbody></table></div>
    <div class="small muted">الكشف يتبع الشعبة الرسمية في النظام. الطالب الذي حضر في أي قاعة خلال الأسبوع يُحسب حاضراً، والأسبوع يبدأ من الأحد.</div>
   </section>`;
 }
@@ -399,14 +434,22 @@ function manageHtml(){
    <div class="small muted">أي تعديل يُحفظ مباشرة. تغيير شعبة المامو يؤثر على الجلسات الجديدة فقط ولا يغيّر ما رُحّل سابقاً.</div>
   </section>`;
 }
+function adminsHtml(){
+  const rows=ADMINS.map(e=>`<tr><td dir="ltr" style="text-align:right">${esc(e)}</td><td class="num"><button class="btn sm danger" data-act="admdel" data-e="${esc(e)}">إزالة</button></td></tr>`).join('')||'<tr><td colspan="2" class="muted center">لا يوجد مشرفون بعد</td></tr>';
+  return `<section class="card col"><h2>المشرفون</h2>
+   <p class="muted small" style="margin:0">المشرف يستطيع أخذ الحضور وتعديله وحذفه وإدارة القوائم، لكنه لا يضيف مشرفين. لإضافة مشرف: أنشئ له أولاً حساباً في Firebase (Authentication ثم Users ثم Add user)، ثم اكتب بريده هنا.</p>
+   <div class="tbl"><table style="min-width:0"><thead><tr><th>بريد المشرف</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+   <div class="row"><div class="field" style="flex:1;min-width:220px"><label for="a-mail">بريد مشرف جديد</label><input id="a-mail" type="email" dir="ltr" placeholder="name@example.com"></div><button class="btn primary" data-act="admadd">إضافة</button></div></section>`;
+}
 function teacherHtml(){
   let main='';const c=cur();
-  if(V.tab==='rec')main=pickerHtml()+(c&&c.s?(c.s.status==='open'?liveHtml():editHtml()):'');
+  if(V.tab==='rec')main=termHtml()+pickerHtml()+(c&&c.s?(c.s.status==='open'?liveHtml():editHtml()):'');
   else if(V.tab==='off')main=officialHtml();
+  else if(V.tab==='adm'&&IS_OWNER)main=adminsHtml();
   else main=manageHtml();
-  return `<header class="top"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>حضور ${COURSE.name}</h1></div>
-   <div class="row" style="align-items:center"><button class="theme" data-act="theme">${themeLabel()}</button><button class="theme" data-act="logout">خروج</button></div></header>
-   <nav class="tabs" role="tablist"><button class="tab" role="tab" data-act="tab" data-v="rec" aria-selected="${V.tab==='rec'}">تسجيل الحضور</button><button class="tab" role="tab" data-act="tab" data-v="off" aria-selected="${V.tab==='off'}">كشف النظام الرسمي</button><button class="tab" role="tab" data-act="tab" data-v="man" aria-selected="${V.tab==='man'}">إدارة القوائم</button></nav>
+  return `<header class="top"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${TITLE}</h1></div>
+   <div class="row" style="align-items:center"><button class="theme" data-act="theme">${themeLabel()}</button><button class="theme" data-act="refresh">تحديث</button><button class="theme" data-act="logout">خروج</button></div></header>
+   <nav class="tabs" role="tablist"><button class="tab" role="tab" data-act="tab" data-v="rec" aria-selected="${V.tab==='rec'}">تسجيل الحضور</button><button class="tab" role="tab" data-act="tab" data-v="off" aria-selected="${V.tab==='off'}">كشف النظام الرسمي</button><button class="tab" role="tab" data-act="tab" data-v="man" aria-selected="${V.tab==='man'}">إدارة القوائم</button>${IS_OWNER?`<button class="tab" role="tab" data-act="tab" data-v="adm" aria-selected="${V.tab==='adm'}">المشرفون</button>`:''}</nav>
    ${main}`;
 }
 function renderAll(){
@@ -421,7 +464,7 @@ function renderAll(){
 }
 function renderLogin(msg){
   $('#app').innerHTML=`<div class="stu"><div class="row" style="justify-content:flex-end"><button class="theme" data-act="theme">${themeLabel()}</button></div>
-  <div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>حضور ${COURSE.name}</h1></div>
+  <div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${TITLE}</h1></div>
   <form class="card" id="login"><h2>دخول المدرّس</h2>
    <div class="field"><label for="l-mail">البريد الإلكتروني</label><input id="l-mail" type="email" dir="ltr" autocomplete="username" required></div>
    <div class="field"><label for="l-pass">كلمة المرور</label><input id="l-pass" type="password" dir="ltr" autocomplete="current-password" required></div>
@@ -440,7 +483,7 @@ async function initStudent(){
 }
 function renderStudent(){
   const s=ST.sess;
-  const head=`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${COURSE.name}</h1>${s?`<div class="small muted">${dayName(s.date)} ${fmtDate(s.date)}</div>`:''}</div><button class="theme" data-act="theme">${themeLabel()}</button></div>`;
+  const head=`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">${COURSE.code} · ${COURSE.term}</div><h1>${TITLE}</h1>${s?`<div class="small muted">${dayName(s.date)} ${fmtDate(s.date)}</div>`:''}</div><button class="theme" data-act="theme">${themeLabel()}</button></div>`;
   let body='';
   if(ST.step==='load')body='<p class="muted">جارٍ التحقق من الرمز...</p>';
   else if(ST.step==='bad')body=`<div class="err">${esc(ST.msg)}</div>`;
@@ -474,11 +517,48 @@ async function stuConfirm(){
   }
 }
 
+/* ---------- export ---------- */
+function downloadCSV(name,aoa){
+  const csv='\ufeff'+aoa.map(r=>r.map(c=>{c=c==null?'':String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function downloadXLSX(name,sheets){
+  if(typeof XLSX==='undefined')return toast('مكتبة Excel لم تُحمَّل. جرّب تنزيل CSV');
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(([n,aoa,w])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=(w||aoa[0].map(()=>16)).map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n)});
+  wb.Workbook={Views:[{RTL:true}]};XLSX.writeFile(wb,name);
+}
+function sessionExport(){
+  const {s,r}=cur();const head=['#','الرقم الجامعي','الاسم','الشعبة الرسمية (النظام)','شعبة المامو الأصلية','الحالة','المصدر','وقت التسجيل بالرمز','حضر بقاعة غير قاعته','عدد الغياب المرحّل','نسبة الغياب % (من '+LECT_WEEKS+')','التاريخ','اليوم','الأسبوع','قاعة الجلسة','مامو الجلسة','حالة الجلسة'];
+  const rows=sessionRows(s.sec,r.draft).map((x,i)=>{const st=stat(x.id);const src=r.src[x.id];const tm=(r.times||{})[x.id];
+    return [i+1,x.id,x.name,x.off,x.mam,r.draft[x.id]==='A'?'غائب':'حاضر',src==='qr'?'رمز QR':src==='m'?'يدوي':'',tm?clock(tm):'',x.mam!==s.sec?'نعم':'',st.a,+st.pct.toFixed(2),fmtDate(s.date),dayName(s.date),weekNo(s.date),ROOMS[s.sec],s.sec,r.final?(isDirty(r)?'مرحّل مع تعديلات غير مرحّلة':'مرحّل'):'مسودة']});
+  const all=sessionRows(s.sec,r.draft);const cnt=(f)=>all.filter(f).length;const A=x=>r.draft[x.id]==='A';
+  const sum=[['البند','القيمة'],['المساق',COURSE.code+' '+COURSE.name],['التاريخ',fmtDate(s.date)+' ('+dayName(s.date)+')'],['الأسبوع',weekNo(s.date)+' من '+LECT_WEEKS],['شعبة المامو / القاعة',s.sec+' / '+ROOMS[s.sec]],['إجمالي الطلاب في القائمة',all.length],['حاضر',cnt(x=>!A(x))],['غائب',cnt(A)],
+    ['حاضر من الشعبة الرسمية 1',cnt(x=>!A(x)&&x.off===1)],['غائب من الشعبة الرسمية 1',cnt(x=>A(x)&&x.off===1)],['حاضر من الشعبة الرسمية 2',cnt(x=>!A(x)&&x.off===2)],['غائب من الشعبة الرسمية 2',cnt(x=>A(x)&&x.off===2)],
+    ['حضروا بقاعة غير قاعتهم',cnt(x=>x.mam!==s.sec)],['سُجّلوا بالرمز',cnt(x=>r.src[x.id]==='qr')],['سُجّلوا يدوياً',cnt(x=>r.src[x.id]==='m')]];
+  return{head,rows,sum,name:`attendance_${s.date}_mamo${s.sec}`};
+}
+function officialExport(sec){
+  const b=sundayOf(V.offDate);const head=['#','الرقم الجامعي','الاسم','الشعبة الرسمية (النظام)','شعبة المامو','حالة الأسبوع','عدد الغياب الكلي','نسبة الغياب % (من '+LECT_WEEKS+')','الأسبوع','من','إلى'];
+  const rows=students().filter(s=>s.off===sec).sort((a,c)=>a.oi-c.oi||a.id-c.id).map((s,i)=>{const st=status(b,s.id);const t=stat(s.id);
+    return [i+1,s.id,s.name,s.off,s.mam,st==='A'?'غائب':st==='P'?'حاضر':'غير مسجّل',t.a,+t.pct.toFixed(2),weekNo(b),fmtDate(b),fmtDate(addDays(b,6))]});
+  return{head,rows};
+}
+
 /* ---------- events ---------- */
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b||b.tagName==='INPUT')return;const a=b.dataset.act;
   switch(a){
    case'theme':cycleTheme();break;
+   case'refresh':try{await loadAll();renderAll();toast('تم تحديث البيانات')}catch(e){toast('تعذّر التحديث')}break;
+   case'wk':{const w=+b.dataset.w;V.date=addDays(weekStart(w),V.sec===1?2:0);V.offDate=weekStart(w);renderAll();toast(`الأسبوع ${w}: ${dayName(V.date)} ${fmtDate(V.date)}`);break}
+   case'xs':{const e=sessionExport();downloadXLSX(e.name+'.xlsx',[['الحضور',[e.head,...e.rows],[5,14,34,16,16,10,12,14,16,14,18,12,10,8,12,10,22]],['ملخص',e.sum,[34,36]]]);break}
+   case'cs':{const e=sessionExport();downloadCSV(e.name+'.csv',[e.head,...e.rows]);break}
+   case'xo':{const b0=sundayOf(V.offDate);const sh=[1,2].map(s=>{const e=officialExport(s);return['شعبة رسمية '+s,[e.head,...e.rows],[5,14,34,16,14,14,14,18,8,12,12]]});downloadXLSX(`system_absence_week${weekNo(b0)}.xlsx`,sh);break}
+   case'co':{const e=officialExport(V.offSec);downloadCSV(`system_absence_week${weekNo(sundayOf(V.offDate))}_sec${V.offSec}.csv`,[e.head,...e.rows]);break}
+   case'admadd':{const m=($('#a-mail').value||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(m))return toast('اكتب بريداً صحيحاً');if(ADMINS.includes(m)||m===OWNER)return toast('هذا البريد موجود');
+     ADMINS=[...ADMINS,m];try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('تمت إضافة المشرف')}catch(e){ADMINS=ADMINS.filter(x=>x!==m);toast('تعذّر الحفظ: تأكد من نشر القواعد الجديدة')}renderAll();break}
+   case'admdel':{const m=b.dataset.e;const old=ADMINS;ADMINS=ADMINS.filter(x=>x!==m);try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('أُزيل المشرف')}catch(e){ADMINS=old;toast('تعذّر الحفظ')}renderAll();break}
    case'logout':stopLive();watchCheckins(null);await signOut(auth);break;
    case'tab':V.tab=b.dataset.v;renderAll();break;
    case'sec':V.sec=+b.dataset.v;renderAll();break;
@@ -553,7 +633,7 @@ if(!configured){
 else{
   renderLogin();
   onAuthStateChanged(auth,async u=>{
-    USER=u;
+    USER=u;IS_OWNER=!!(u&&u.email&&OWNER&&u.email.toLowerCase()===OWNER);
     if(!u){stopLive();renderLogin();return}
     $('#app').innerHTML='<div class="stu"><p class="muted center">جارٍ تحميل البيانات...</p></div>';
     try{await loadAll();const d=doneBuckets();V.offDate=d.length?d[d.length-1]:today();renderAll()}
