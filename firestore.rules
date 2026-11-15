@@ -7,40 +7,48 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'yhijazi40@gmail.com';
     }
 
-    // المالك أو أي مشرف أضافه المالك من تبويب «المشرفون»
-    function teacher() {
+    // مشرف عام: المالك أو من أضافه المالك في تبويب «المشرفون العامون»
+    function isGlobal() {
       return isOwner() || (request.auth != null &&
         request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails);
     }
 
+    // مشرف مخصص لهذا المساق فقط (البريد مكتوب في حقل admins داخل المساق)
+    function isStaff(cid) {
+      return request.auth != null &&
+        request.auth.token.email in get(/databases/$(database)/documents/courses/$(cid)).data.admins;
+    }
+
+    function canWork(cid) { return isGlobal() || isStaff(cid); }
+
     match /config/{docId} {
-      allow read: if teacher();
+      allow read: if isGlobal();
       allow write: if isOwner();
     }
 
-    // كل مساق وثيقة مستقلة مع قوائمه وجلساته
     match /courses/{cid} {
-      allow read, write: if teacher();
+      // المشرف العام يرى كل المساقات، ومشرف المساق يرى مساقه فقط
+      allow read: if isGlobal() || (request.auth != null && request.auth.token.email in resource.data.admins);
+      // إعدادات المساق (ومنها قائمة مشرفيه) للمشرف العام فقط
+      allow write: if isGlobal();
 
-      // الطالب يقرأ سجلاً واحداً إذا عرف رقمه فقط، والمشرفون وحدهم يرون القائمة كاملة
       match /students/{id} {
         allow get: if true;
-        allow list, write: if teacher();
+        allow list, write: if canWork(cid);
       }
 
-      // حالة الجلسة (مفتوحة/مغلقة) تُقرأ علناً ولا يعدّلها إلا المشرفون
       match /sessions/{sid} {
         allow read: if true;
-        allow write: if teacher();
+        allow write: if canWork(cid);
       }
 
-      match /records/{sid} { allow read, write: if teacher(); }
-      match /tokens/{sid}  { allow read, write: if teacher(); }
+      match /records/{sid} { allow read, write: if canWork(cid); }
+      match /tokens/{sid}  { allow read, write: if canWork(cid); }
 
-      // تسجيل الطالب: مرة واحدة فقط، الجلسة مفتوحة، الرقم بالقائمة، الرمز صالح
+      // تسجيل الطالب: مرة واحدة، الجلسة مفتوحة، الرقم بالقائمة، الرمز صالح وغير منتهٍ
       match /checkins/{x} {
-        allow read, delete: if teacher();
-        allow create: if teacher() || (
+        allow read, delete: if canWork(cid);
+        allow create: if canWork(cid) || (
           request.resource.data.keys().hasOnly(['sid', 'id', 't', 'token']) &&
           request.resource.data.id is string &&
           request.resource.data.sid is string &&
@@ -48,16 +56,17 @@ service cloud.firestore {
           request.resource.data.t == request.time &&
           get(/databases/$(database)/documents/courses/$(cid)/sessions/$(request.resource.data.sid)).data.status == 'open' &&
           exists(/databases/$(database)/documents/courses/$(cid)/students/$(request.resource.data.id)) &&
-          request.resource.data.token in get(/databases/$(database)/documents/courses/$(cid)/tokens/$(request.resource.data.sid)).data.valid
+          request.resource.data.token in get(/databases/$(database)/documents/courses/$(cid)/tokens/$(request.resource.data.sid)).data.valid &&
+          request.time.toMillis() < get(/databases/$(database)/documents/courses/$(cid)/tokens/$(request.resource.data.sid)).data.exp + 120000
         );
       }
     }
 
     // بيانات النسخة السابقة (للنقل فقط)
-    match /roster/{id}   { allow read, write: if teacher(); }
-    match /sessions/{id} { allow read, write: if teacher(); }
-    match /records/{id}  { allow read, write: if teacher(); }
-    match /tokens/{id}   { allow read, write: if teacher(); }
-    match /checkins/{id} { allow read, write: if teacher(); }
+    match /roster/{id}   { allow read, write: if isGlobal(); }
+    match /sessions/{id} { allow read, write: if isGlobal(); }
+    match /records/{id}  { allow read, write: if isGlobal(); }
+    match /tokens/{id}   { allow read, write: if isGlobal(); }
+    match /checkins/{id} { allow read, write: if isGlobal(); }
   }
 }

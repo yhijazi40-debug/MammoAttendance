@@ -4,8 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>نظام حضور المساقات</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"></noscript>
+<script>(function(){var s=/^#c-/.test(location.hash),g='https://www.gstatic.com/firebasejs/10.14.1/',a=s?['firebase-app.js','firebase-firestore-lite.js']:['firebase-app.js','firebase-firestore.js','firebase-auth.js'];a.forEach(function(f){var l=document.createElement('link');l.rel='modulepreload';l.href=g+f;document.head.appendChild(l)})})();</script>
 <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <style>
 /* Layout: lecturer console with a course selector and tabs; student view is a single centred card. */
@@ -114,19 +118,33 @@ textarea.copy{width:100%;min-height:110px;font:13px monospace;direction:ltr;back
 .legend{display:flex;gap:14px;flex-wrap:wrap}
 .tool{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .sub{border-top:1px solid var(--line);padding-top:14px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.topbar .acts{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.steps{display:flex;gap:8px;list-style:none;margin:0;padding:0}
+.steps li{flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font-size:13px;min-width:0}
+.steps li b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--tint);font-size:12px;flex:none}
+.steps li.done{color:var(--ink)} .steps li.done b{background:var(--on);color:#fff}
+.steps li.now{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:600} .steps li.now b{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:640px){.steps{flex-wrap:wrap}.steps li{flex:1 1 45%}}
+.pw{position:relative;display:flex}
+.pw input{flex:1;padding-inline-end:46px}
+.eye{position:absolute;inset-block:0;inset-inline-end:0;width:44px;border:0;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.eye[aria-pressed="true"]{color:var(--accent)}
+.idle{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:10px;padding:10px 14px;z-index:25;display:flex;gap:12px;align-items:center;max-width:92vw}
+details.card>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:600}
+details.card>summary::-webkit-details-marker{display:none}
+details.card[open]>summary{margin-bottom:12px}
+.subnav{display:flex;gap:8px;flex-wrap:wrap}
+textarea.f{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-height:70px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <div id="toast" hidden></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import * as CFG from './firebase-config.js';
-import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import {getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,query,where,onSnapshot,serverTimestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+const G='https://www.gstatic.com/firebasejs/10.14.1/';
 
 const firebaseConfig=CFG.firebaseConfig;
 const OWNER=String(CFG.ownerEmail||'').toLowerCase();
@@ -134,7 +152,21 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const configured=!!(firebaseConfig&&firebaseConfig.apiKey&&!String(firebaseConfig.apiKey).startsWith('PASTE'));
 let auth=null,db=null;
-if(configured){const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app)}
+let initializeApp,getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut,setPersistence,browserSessionPersistence,getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,query,where,onSnapshot,serverTimestamp,writeBatch;
+let sdkP=null;
+/* الطالب يحمّل نسخة Firestore الخفيفة فقط (بدون Auth)، والمدرّس يحمّل النسخة الكاملة */
+function loadSDK(student){
+  return (async()=>{
+    const [a,f,u]=await Promise.all([import(G+'firebase-app.js'),import(G+(student?'firebase-firestore-lite.js':'firebase-firestore.js')),student?null:import(G+'firebase-auth.js')]);
+    ({initializeApp}=a);({getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,query,where,onSnapshot,serverTimestamp,writeBatch}=f);
+    if(u)({getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut,setPersistence,browserSessionPersistence}=u);
+    const app=initializeApp(firebaseConfig);db=getFirestore(app);if(u)auth=getAuth(app);
+  })();
+}
+/* مكتبات الرمز وExcel للمدرّس فقط وتُحمَّل عند الحاجة */
+const loadScript=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+let libsP=null;
+function loadLibs(){if(!libsP)libsP=Promise.allSettled([loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js').then(()=>{if(live.sid){live.qr=null;drawQR()}}),loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')]).then(r=>{if(r.some(x=>x.status==='rejected'))libsP=null});return libsP}
 
 /* ---------- helpers ---------- */
 function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3200)}
@@ -158,17 +190,18 @@ function cycleTheme(){let t='auto';try{t=localStorage.getItem('theme')||'auto'}c
   if(n==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',n);
   document.querySelectorAll('.theme[data-act=theme]').forEach(b=>b.textContent=themeLabel())}
 const dayFromTxt=t=>{t=String(t||'').trim();const m={'حد':0,'احد':0,'أحد':0,'الأحد':0,'ن':1,'اثنين':1,'إثنين':1,'الاثنين':1,'الإثنين':1,'ثل':2,'ث':2,'ثلاثاء':2,'الثلاثاء':2,'ر':3,'اربعاء':3,'أربعاء':3,'الأربعاء':3,'خ':4,'خميس':4,'الخميس':4};return m[t]!=null?m[t]:null};
-const emptyCourse=()=>({code:'',name:'',term:'الفصل الأول 2026-2027',termStart:'2026-10-11',lectureWeeks:15,totalWeeks:17,absLimit:20,off:[{n:1,day:2},{n:2,day:4}],mam:[{n:1,room:'',day:2},{n:2,room:'',day:4}],exams:[]});
+const emptyCourse=()=>({code:'',name:'',term:'الفصل الأول 2026-2027',termStart:'2026-10-11',lectureWeeks:15,totalWeeks:17,absLimit:20,off:[{n:1,day:2},{n:2,day:4}],mam:[{n:1,room:'',day:2},{n:2,room:'',day:4}],exams:[],admins:[],adminsTxt:''});
 
 /* ---------- state ---------- */
 const COURSES=new Map();           // id -> course
+const COURSE_TRASH=new Map();
 let CC=null;                       // current course
 const STU=new Map();               // id -> {id,name,off,mam,oi,mi}
-const S={sessions:{},records:{}};
-let USER=null,IS_OWNER=false,ADMINS=[],LEGACY=false;
+const S={sessions:{},records:{},trash:{sessions:{},records:{},students:new Map()}};
+let USER=null,IS_OWNER=false,IS_GLOBAL=false,ADMINS=[],LEGACY=false;
 let watched={sid:null,unsub:null,list:[]};
 const chains={},timers={};
-const V={tab:'rec',cid:null,date:today(),custom:false,sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offWeek:1,confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null,lq:'',lid:null,cf:null,cdel:null};
+const V={sub:'crs',termOpen:false,tab:'rec',cid:null,date:today(),custom:false,sec:1,sid:null,q:'',addq:'',onlyAbs:false,offSec:1,offWeek:1,confirmDel:false,copy:null,mq:'',mdiff:false,mdel:null,lq:'',lid:null,cf:null,cdel:null};
 const hashM=/^#c-([a-z0-9]+)-(d\d{8}s\d+)-([a-z0-9]+)$/.exec(location.hash||'');
 const isStudent=!!hashM;
 const students=()=>[...STU.values()];
@@ -189,18 +222,28 @@ function defaultDate(sec){const l=lectureDates(sec),t=today();let d=l[0];for(con
 /* ---------- firestore paths ---------- */
 const cref=(...p)=>doc(db,'courses',CC.id,...p);
 const ccol=n=>collection(db,'courses',CC.id,n);
+const DAY30=30*86400000;
 function queue(key,fn){chains[key]=(chains[key]||Promise.resolve()).then(fn).catch(e=>{console.error(e);toast('تعذّر الحفظ: تحقق من الاتصال والصلاحيات')});return chains[key]}
-const saveSession=sid=>queue('s'+sid,()=>{const s=S.sessions[sid];return setDoc(cref('sessions',sid),{date:s.date,sec:s.sec,status:s.status,openedAt:s.openedAt||Date.now(),courseName:CC.name,courseCode:CC.code,room:room(s.sec)})});
-const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid];return setDoc(cref('records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},times:r.times||{},final:r.final||null,committedAt:r.committedAt||null})});
+const saveSession=sid=>queue('s'+sid,()=>{const s=S.sessions[sid]||S.trash.sessions[sid];return setDoc(cref('sessions',sid),{date:s.date,sec:s.sec,status:s.status,openedAt:s.openedAt||Date.now(),courseName:CC.name,courseCode:CC.code,room:room(s.sec),deletedAt:s.deletedAt||null})});
+const saveRecord=sid=>queue('r'+sid,()=>{const r=S.records[sid]||S.trash.records[sid];return setDoc(cref('records',sid),{date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},times:r.times||{},final:r.final||null,committedAt:r.committedAt||null,history:r.history||[]})});
 const saveRecordSoon=sid=>{clearTimeout(timers[sid]);timers[sid]=setTimeout(()=>saveRecord(sid),500)};
-const saveStudent=s=>queue('t'+s.id,()=>setDoc(cref('students',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi}));
-const courseData=c=>({code:c.code,name:c.name,term:c.term,termStart:c.termStart,lectureWeeks:c.lectureWeeks,totalWeeks:c.totalWeeks,absLimit:c.absLimit,off:c.off,mam:c.mam,exams:c.exams||[]});
+const saveStudent=s=>queue('t'+s.id,()=>setDoc(cref('students',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi,deletedAt:s.deletedAt||null}));
+const courseData=c=>({code:c.code,name:c.name,term:c.term,termStart:c.termStart,lectureWeeks:c.lectureWeeks,totalWeeks:c.totalWeeks,absLimit:c.absLimit,off:c.off,mam:c.mam,exams:c.exams||[],admins:c.admins||[],deletedAt:c.deletedAt||null});
 const saveCourse=c=>queue('c'+c.id,()=>setDoc(doc(db,'courses',c.id),courseData(c)));
+async function purgeSession(sid){
+  try{const l=await getDocs(query(ccol('checkins'),where('sid','==',sid)));for(const d of l.docs)await deleteDoc(d.ref||cref('checkins',d.id));
+    await deleteDoc(cref('sessions',sid));await deleteDoc(cref('records',sid));await deleteDoc(cref('tokens',sid)).catch(()=>{})}catch(e){console.error(e)}
+}
+async function purgeCourse(id){try{for(const n of['students','sessions','records','tokens','checkins'])await wipe('courses',id,n);await deleteDoc(doc(db,'courses',id))}catch(e){console.error(e)}}
 async function loadAll(){
-  const cs=await getDocs(collection(db,'courses'));COURSES.clear();
-  cs.forEach(d=>COURSES.set(d.id,{id:d.id,...d.data()}));
-  try{const a=await getDoc(doc(db,'config','admins'));ADMINS=a.exists()?(a.data().emails||[]):[]}catch(e){ADMINS=[]}
-  try{const l=await getDocs(collection(db,'roster'));LEGACY=l.size>0}catch(e){LEGACY=false}
+  const em=USER&&USER.email?USER.email.toLowerCase():'';
+  let cs;
+  try{cs=await getDocs(collection(db,'courses'));IS_GLOBAL=true}
+  catch(e){IS_GLOBAL=false;cs=await getDocs(query(collection(db,'courses'),where('admins','array-contains',em)))}
+  COURSES.clear();COURSE_TRASH.clear();
+  cs.forEach(d=>{const c={id:d.id,...d.data()};if(c.deletedAt){if(Date.now()-c.deletedAt>DAY30)purgeCourse(c.id);else COURSE_TRASH.set(c.id,c)}else COURSES.set(c.id,c)});
+  ADMINS=[];if(IS_OWNER){try{const a=await getDoc(doc(db,'config','admins'));ADMINS=a.exists()?(a.data().emails||[]):[]}catch(e){}}
+  LEGACY=false;if(IS_GLOBAL){try{const l=await getDocs(collection(db,'roster'));LEGACY=l.size>0}catch(e){}}
   let id=V.cid;try{id=id||localStorage.getItem('cid')}catch(e){}
   if(!COURSES.has(id))id=COURSES.size?[...COURSES.keys()][0]:null;
   await selectCourse(id);
@@ -208,16 +251,18 @@ async function loadAll(){
 async function selectCourse(id){
   stopLive();watchCheckins(null);
   V.cid=id;V.sid=null;V.q='';V.lid=null;V.lq='';idxDirty=true;
-  STU.clear();S.sessions={};S.records={};CC=id?COURSES.get(id):null;
+  STU.clear();S.sessions={};S.records={};S.trash={sessions:{},records:{},students:new Map()};CC=id?COURSES.get(id):null;
   if(!CC)return;
   try{localStorage.setItem('cid',id)}catch(e){}
   const [r,s,c]=await Promise.all([getDocs(ccol('students')),getDocs(ccol('sessions')),getDocs(ccol('records'))]);
-  r.forEach(d=>{const x=d.data();STU.set(+d.id,{id:+d.id,name:x.name,off:x.off,mam:x.mam,oi:x.oi||0,mi:x.mi||0})});
-  s.forEach(d=>{S.sessions[d.id]=d.data()});
-  c.forEach(d=>{S.records[d.id]=d.data()});
+  r.forEach(d=>{const x=d.data();const st={id:+d.id,name:x.name,off:x.off,mam:x.mam,oi:x.oi||0,mi:x.mi||0,deletedAt:x.deletedAt||null};
+    if(st.deletedAt){if(Date.now()-st.deletedAt>DAY30)deleteDoc(cref('students',d.id)).catch(()=>{});else S.trash.students.set(st.id,st)}else STU.set(st.id,st)});
+  s.forEach(d=>{const x=d.data();if(x.deletedAt){if(Date.now()-x.deletedAt>DAY30)purgeSession(d.id);else S.trash.sessions[d.id]=x}else S.sessions[d.id]=x});
+  c.forEach(d=>{const x=d.data();x.history=x.history||[];x.times=x.times||{};x.src=x.src||{};
+    if(d.id in S.trash.sessions)S.trash.records[d.id]=x;else if(d.id in S.sessions)S.records[d.id]=x});
   V.sec=CC.mam.length?CC.mam[0].n:1;V.offSec=CC.off.length?CC.off[0].n:1;V.custom=false;
   V.date=defaultDate(V.sec);
-  const d=doneBuckets();V.offWeek=d.length?weekNo(d[d.length-1]):Math.max(1,Math.min(CC.lectureWeeks,weekNo(today())));
+  const dn=doneBuckets();V.offWeek=dn.length?weekNo(dn[dn.length-1]):Math.max(1,Math.min(CC.lectureWeeks,weekNo(today())));
   idxDirty=true;
 }
 function watchCheckins(sid){
@@ -271,17 +316,17 @@ async function closeQR(){
   r.times=r.times||{};
   watched.list.forEach(c=>{r.times[c.id]=c.t;if(r.src[c.id]!=='m'){r.draft[c.id]='P';r.src[c.id]='qr'}});
   s.status='closed';stopLive();renderAll();
-  await queue('tok'+V.sid,()=>setDoc(cref('tokens',V.sid),{valid:[]}));
+  await queue('tok'+V.sid,()=>setDoc(cref('tokens',V.sid),{valid:[],exp:0}));
   await saveSession(V.sid);await saveRecord(V.sid);
 }
 async function reopenQR(){const {s}=cur();s.status='open';renderAll();await saveSession(V.sid)}
-async function commit(){const {r}=cur();r.final={...r.draft};r.committedAt=Date.now();idxDirty=true;V.offWeek=Math.min(Math.max(1,weekNo(r.date)),CC.lectureWeeks);renderAll();toast('تم ترحيل الحضور');await saveRecord(V.sid)}
+async function commit(){const {r}=cur();r.final={...r.draft};r.committedAt=Date.now();r.history=[...(r.history||[]),{at:r.committedAt,by:USER&&USER.email?USER.email:'',final:{...r.final}}].slice(-15);idxDirty=true;V.offWeek=Math.min(Math.max(1,weekNo(r.date)),CC.lectureWeeks);renderAll();toast('تم ترحيل الحضور');await saveRecord(V.sid)}
 async function removeSession(){
   const sid=V.sid;stopLive();watchCheckins(null);
-  const list=await getDocs(query(ccol('checkins'),where('sid','==',sid))).catch(()=>({docs:[]}));
-  delete S.sessions[sid];delete S.records[sid];V.sid=null;V.confirmDel=false;idxDirty=true;renderAll();
-  try{await deleteDoc(cref('sessions',sid));await deleteDoc(cref('records',sid));await deleteDoc(cref('tokens',sid)).catch(()=>{});
-    for(const d of list.docs)await deleteDoc(d.ref||cref('checkins',d.id))}catch(e){toast('تعذّر حذف بعض البيانات')}
+  const s=S.sessions[sid];s.deletedAt=Date.now();s.status='closed';
+  S.trash.sessions[sid]=s;S.trash.records[sid]=S.records[sid];delete S.sessions[sid];delete S.records[sid];
+  V.sid=null;V.confirmDel=false;idxDirty=true;renderAll();toast('نُقلت الجلسة إلى سلة المحذوفات (30 يوماً)');
+  await saveSession(sid);await queue('tok'+sid,()=>setDoc(cref('tokens',sid),{valid:[],exp:0}));
 }
 function setMark(id,absent){const {r}=cur();r.draft[id]=absent?'A':'P';r.src[id]='m';saveRecordSoon(V.sid)}
 function addVisitor(id){const {r}=cur();r.draft[id]='P';r.src[id]='m';V.addq='';saveRecordSoon(V.sid);renderAll()}
@@ -290,7 +335,7 @@ function addVisitor(id){const {r}=cur();r.draft[id]='P';r.src[id]='m';V.addq='';
 async function rotate(){
   if(live.busy)return;live.busy=true;
   const t=rand();const next=[...live.tokens,t].slice(-3);
-  try{await setDoc(cref('tokens',live.sid),{valid:next});live.tokens=next;live.cur=t;live.last=Date.now();drawQR()}
+  try{await setDoc(cref('tokens',live.sid),{valid:next,exp:Date.now()+6*60000});live.tokens=next;live.cur=t;live.last=Date.now();drawQR()}
   catch(e){console.error(e);toast('تعذّر تحديث الرمز')}
   live.busy=false;
 }
@@ -333,10 +378,10 @@ function termHtml(){
     const cls=['wk',past?'past':'',ts.cur===k?'cur':'',ex?'ex':''].join(' ');
     return `<button class="${cls}" data-act="wk" data-w="${k}" title="${ex?ex+' · ':''}${fmtDate(st)}"><b>${k}</b><span>${fmtDate(st).slice(0,5)}</span><span class="ck">${done.has(st)?'✓':has?'•':'&nbsp;'}</span></button>`}).join('');
   const lim=Math.floor(CC.lectureWeeks*CC.absLimit/100);
-  return `<section class="card col"><div class="row" style="justify-content:space-between;align-items:center"><h2>الفصل الدراسي</h2>
-   <span class="small muted">${ts.w>=1&&ts.w<=CC.totalWeeks?'اليوم في الأسبوع '+ts.w:ts.w<1?'لم يبدأ التدريس':'انتهت أسابيع الفصل'} · مضى ${ts.E} من ${CC.lectureWeeks}${ts.cur?' · الحالي '+ts.cur:''} · المتبقي ${ts.R}</span></div>
-   <div class="weeks">${cells}</div>
-   <div class="legend small muted"><span>✓ مرحّل</span><span>• مسودة أو مفتوح</span><span><i class="dot" style="background:var(--warn)"></i>أسبوع فيه امتحانات</span><span>الحد الأقصى للغياب ${lim} من ${CC.lectureWeeks} (${CC.absLimit}%)</span></div></section>`;
+  return `<details class="card" id="terms" ${V.termOpen?'open':''}><summary><span>خريطة الأسابيع</span>
+   <span class="small muted" style="font-weight:400">${ts.w>=1&&ts.w<=CC.totalWeeks?'اليوم في الأسبوع '+ts.w:ts.w<1?'لم يبدأ التدريس':'انتهت أسابيع الفصل'} · مضى ${ts.E} من ${CC.lectureWeeks}${ts.cur?' · الحالي '+ts.cur:''} · المتبقي ${ts.R}</span></summary>
+   <div class="col"><div class="weeks">${cells}</div>
+   <div class="legend small muted"><span>✓ مرحّل</span><span>• مسودة أو مفتوح</span><span><i class="dot" style="background:var(--warn)"></i>أسبوع فيه امتحانات</span><span>الحد الأقصى للغياب ${lim} من ${CC.lectureWeeks} (${CC.absLimit}%)</span></div></div></details>`;
 }
 function pickerHtml(){
   const sid=sidOf(V.date,V.sec),ex=S.sessions[sid];
@@ -389,7 +434,7 @@ function editHtml(){
   return `<section class="card col">
    <div class="row" style="justify-content:space-between;align-items:center">
      <div><h2>قائمة الطلاب · ${dayName(s.date)} ${fmtDate(s.date)} · ${mamLabel(s.sec)} · الأسبوع ${weekNo(s.date)}</h2><div class="small muted">المفعّل (الأخضر) = غياب</div></div>
-     <div class="row" style="align-items:center"><span class="pill" id="cnt">${counts(r)}</span><button class="btn ghost sm" data-act="xs">تنزيل Excel</button><button class="btn ghost sm" data-act="cs">تنزيل CSV</button><button class="btn ghost" data-act="reopen">فتح الرمز</button></div>
+     <div class="row" style="align-items:center"><span class="pill" id="cnt">${counts(r)}</span>${(r.history&&r.history.length)?`<select data-f="hist" aria-label="استرجاع نسخة سابقة" style="min-height:32px;padding:3px 8px;font-size:13px"><option value="">نسخ سابقة (${r.history.length})</option>${r.history.map((h,i)=>({h,i})).reverse().map(({h,i})=>`<option value="${i}">${fmtDate(ymd(new Date(h.at)))} ${clock(h.at)} · غائب ${Object.values(h.final).filter(v=>v==='A').length}${h.by?' · '+esc(h.by.split('@')[0]):''}</option>`).join('')}</select>`:''}<button class="btn ghost sm" data-act="xs">تنزيل Excel</button><button class="btn ghost sm" data-act="cs">تنزيل CSV</button><button class="btn ghost" data-act="reopen">فتح الرمز</button></div>
    </div>
    <div class="row">
      <div class="field" style="flex:1;min-width:180px"><label for="f-q">بحث في القائمة</label><input id="f-q" type="search" value="${esc(V.q)}" placeholder="الاسم أو الرقم الجامعي" data-f="q"></div>
@@ -520,16 +565,17 @@ function courseFormHtml(){
    <div class="sub"><h2>الشعب الرسمية (النظام)</h2><div class="tbl" style="margin-top:8px"><table style="min-width:0"><thead><tr><th>رقم الشعبة</th><th>يوم المحاضرة بالنظام</th><th></th></tr></thead><tbody>${off}</tbody></table></div><button class="btn sm ghost" data-act="cadd" data-g="off" style="margin-top:8px">+ شعبة رسمية</button></div>
    <div class="sub"><h2>مجموعات القاعة (التوزيع الداخلي)</h2><div class="tbl" style="margin-top:8px"><table style="min-width:0"><thead><tr><th>الرقم</th><th>القاعة</th><th>يوم المحاضرة الفعلي</th><th></th></tr></thead><tbody>${mam}</tbody></table></div><button class="btn sm ghost" data-act="cadd" data-g="mam" style="margin-top:8px">+ مجموعة</button></div>
    <div class="sub"><h2>فترات الامتحانات (اختياري، للتنبيه فقط)</h2><div class="tbl" style="margin-top:8px"><table style="min-width:0"><thead><tr><th>الاسم</th><th>من</th><th>إلى</th><th></th></tr></thead><tbody>${ex||'<tr><td colspan="4" class="muted center">لا توجد فترات</td></tr>'}</tbody></table></div><button class="btn sm ghost" data-act="cadd" data-g="exams" style="margin-top:8px">+ فترة امتحان</button></div>
+   <div class="sub field"><label>مشرفو هذا المساق فقط (بريد في كل سطر)</label><textarea class="f" data-cf="adminsTxt" dir="ltr" placeholder="name@example.com">${esc(c.adminsTxt||'')}</textarea><div class="small muted">كل مشرف هنا يرى هذا المساق فقط، ويأخذ الحضور ويدير قوائمه، ولا يستطيع تعديل إعدادات المساق. لازم تنشئ له حساباً في Firebase أولاً (Authentication ثم Users ثم Add user).</div></div>
    <div class="row"><button class="btn primary" data-act="csave">حفظ المساق</button><button class="btn ghost" data-act="ccancel">إلغاء</button></div></section>`;
 }
 function coursesHtml(){
   const rows=[...COURSES.values()].map(c=>`<tr><td dir="auto">${esc(c.code)}</td><td>${esc(c.name)}</td><td class="hm">${esc(c.term||'')}</td>
     <td class="num"><button class="btn sm ghost" data-act="cedit" data-id="${c.id}">تعديل</button>
-    ${V.cdel===c.id?`<button class="btn sm danger" data-act="cdelok" data-id="${c.id}">تأكيد الحذف النهائي</button>`:`<button class="btn sm danger" data-act="cdel" data-id="${c.id}">حذف</button>`}</td></tr>`).join('')||'<tr><td colspan="4" class="muted center">لا توجد مساقات بعد</td></tr>';
+    ${V.cdel===c.id?`<button class="btn sm danger" data-act="cdelok" data-id="${c.id}">تأكيد (يذهب للسلة)</button>`:`<button class="btn sm danger" data-act="cdel" data-id="${c.id}">حذف</button>`}</td></tr>`).join('')||'<tr><td colspan="4" class="muted center">لا توجد مساقات بعد</td></tr>';
   return `<section class="card col"><div class="row" style="justify-content:space-between;align-items:center"><h2>المساقات</h2><button class="btn primary" data-act="cnew">+ مساق جديد</button></div>
    <div class="tbl"><table style="min-width:0"><thead><tr><th>الرمز</th><th>الاسم</th><th class="hm">الفصل</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
    ${LEGACY?`<div class="notice">وُجدت بيانات من النسخة السابقة (مساق شع331). <button class="btn sm" data-act="legacy">نقلها كمساق جاهز</button></div>`:''}
-   <div class="small muted">حذف المساق يمحو كل طلابه وجلساته وسجلاته نهائياً.</div></section>${courseFormHtml()}`;
+   <div class="small muted">المساق المحذوف ينتقل إلى سلة المحذوفات 30 يوماً ويمكن استرجاعه.</div></section>${courseFormHtml()}`;
 }
 function adminsHtml(){
   const rows=ADMINS.map(e=>`<tr><td dir="ltr" style="text-align:right">${esc(e)}</td><td class="num"><button class="btn sm danger" data-act="admdel" data-e="${esc(e)}">إزالة</button></td></tr>`).join('')||'<tr><td colspan="2" class="muted center">لا يوجد مشرفون بعد</td></tr>';
@@ -539,24 +585,57 @@ function adminsHtml(){
    <div class="row"><div class="field" style="flex:1;min-width:220px"><label for="a-mail">بريد مشرف جديد</label><input id="a-mail" type="email" dir="ltr" placeholder="name@example.com"></div><button class="btn primary" data-act="admadd">إضافة</button></div></section>`;
 }
 
+/* ---------- trash / backup / admin panels ---------- */
+const trashCount=()=>Object.keys(S.trash.sessions).length+S.trash.students.size+(IS_GLOBAL?COURSE_TRASH.size:0);
+function trashHtml(){
+  const left=t=>Math.max(0,Math.ceil((t+DAY30-Date.now())/86400000));
+  const row=(label,sub,t,act,id)=>`<tr><td>${label}<div class="small muted">${sub}</div></td><td class="num hm">${left(t)} يوم</td><td class="num" style="white-space:nowrap"><button class="btn sm" data-act="${act}" data-id="${id}">استرجاع</button> <button class="btn sm danger" data-act="${act}p" data-id="${id}">حذف نهائي</button></td></tr>`;
+  const tbl=(title,rows)=>rows?`<div class="col" style="gap:8px"><h2>${title}</h2><div class="tbl"><table style="min-width:0"><thead><tr><th>العنصر</th><th class="num hm">يُحذف نهائياً بعد</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`:'';
+  let body='';
+  if(CC){
+    body+=tbl('جلسات',Object.entries(S.trash.sessions).sort((a,b)=>b[1].deletedAt-a[1].deletedAt).map(([sid,s])=>row(`${dayName(s.date)} ${fmtDate(s.date)} · ${mamLabel(s.sec)}`,`الأسبوع ${weekNo(s.date)}`,s.deletedAt,'rs',sid)).join(''));
+    body+=tbl('طلاب',[...S.trash.students.values()].sort((a,b)=>b.deletedAt-a.deletedAt).map(s=>row(esc(s.name),String(s.id),s.deletedAt,'rt',s.id)).join(''));
+  }
+  if(IS_GLOBAL)body+=tbl('مساقات',[...COURSE_TRASH.values()].sort((a,b)=>b.deletedAt-a.deletedAt).map(c=>row(esc(c.name),esc(c.code),c.deletedAt,'rc',c.id)).join(''));
+  return `<section class="card col"><h2>سلة المحذوفات</h2><div class="small muted">أي شيء تحذفه يبقى هنا 30 يوماً ويمكن استرجاعه، وبعدها يُحذف نهائياً تلقائياً.</div>${body||'<div class="muted">السلة فارغة.</div>'}</section>`;
+}
+function backupHtml(){
+  return `<section class="card col"><h2>النسخ الاحتياطي</h2>
+   <p class="muted small" style="margin:0">بياناتك محفوظة سحابياً في Firebase. وفوق ذلك كل ترحيل يحفظ نسخة قابلة للاسترجاع من الكشف (آخر 15 نسخة لكل جلسة)، والمحذوفات تبقى في السلة 30 يوماً. للحماية الإضافية نزّل نسخة كاملة بين وقت وآخر واحتفظ بها عندك.</p>
+   ${CC?`<div class="row"><button class="btn primary" data-act="bkdl">تنزيل نسخة احتياطية للمساق الحالي (JSON)</button><button class="btn" data-act="xr">تقرير شامل Excel</button></div>`:''}
+   ${IS_GLOBAL?`<div class="sub col"><h2>استعادة من نسخة</h2><div class="small muted">ينشئ مساقاً جديداً من ملف نسخة احتياطية ولا يغيّر مساقاتك الحالية.</div><input type="file" id="f-bk" accept=".json" data-f="restore"></div>`:''}</section>`;
+}
+function adminHtml(){
+  const subs=[];if(IS_GLOBAL)subs.push(['crs','المساقات']);if(IS_OWNER)subs.push(['adm','المشرفون العامون']);subs.push(['trash','سلة المحذوفات'],['bak','النسخ الاحتياطي']);
+  if(!subs.find(s=>s[0]===V.sub))V.sub=subs[0][0];
+  const nav=`<div class="subnav">${subs.map(([k,l])=>`<button class="chip" data-act="sub" data-v="${k}" aria-pressed="${V.sub===k}">${l}${k==='trash'&&trashCount()?` (${trashCount()})`:''}</button>`).join('')}</div>`;
+  const body=V.sub==='crs'?coursesHtml():V.sub==='adm'?adminsHtml():V.sub==='trash'?trashHtml():backupHtml();
+  return nav+body;
+}
+function stepsHtml(){
+  const c=cur();let n=1;
+  if(c&&c.s)n=c.s.status==='open'?2:(!c.r.final||isDirty(c.r))?3:4;
+  const L=['اختيار الجلسة','فتح الرمز','مراجعة القائمة','الترحيل'];
+  return `<ol class="steps">${L.map((l,i)=>{const done=i+1<n||n===4;return `<li class="${done?'done':i+1===n?'now':''}"><b>${done?'✓':i+1}</b><span>${l}</span></li>`}).join('')}</ol>`;
+}
+
 /* ---------- teacher shell ---------- */
 function teacherHtml(){
   const hasC=!!CC;
-  const tab=!hasC&&V.tab!=='crs'&&V.tab!=='adm'?'crs':V.tab;
+  let tab=V.tab;if(!hasC&&tab!=='adm')tab='adm';
   let main='';
-  if(tab==='rec')main=termHtml()+pickerHtml()+(cur()&&cur().s?(cur().s.status==='open'?liveHtml():editHtml()):'');
+  if(tab==='rec')main=stepsHtml()+pickerHtml()+(cur()&&cur().s?(cur().s.status==='open'?liveHtml():editHtml()):'')+termHtml();
   else if(tab==='off')main=officialHtml();
   else if(tab==='log')main=logHtml();
   else if(tab==='man')main=manageHtml();
-  else if(tab==='crs')main=coursesHtml();
-  else if(tab==='adm'&&IS_OWNER)main=adminsHtml();
+  else main=adminHtml();
   const T=(k,l)=>`<button class="tab" role="tab" data-act="tab" data-v="${k}" aria-selected="${tab===k}">${l}</button>`;
-  const csel=hasC?`<div class="field"><label for="f-course">المساق</label><select id="f-course" data-f="course" style="min-width:230px">${[...COURSES.values()].map(c=>`<option value="${c.id}" ${c.id===V.cid?'selected':''}>${esc(c.code)} · ${esc(c.name)}</option>`).join('')}</select></div>`:'';
-  return `<header class="top"><div><div class="eyebrow">نظام حضور المساقات${hasC?' · '+esc(CC.term||''):''}</div><h1>${hasC?'حضور مساق '+esc(CC.name):'نظام حضور المساقات'}</h1></div>
-   <div class="row" style="align-items:center"><button class="theme" data-act="theme">${themeLabel()}</button><button class="theme" data-act="refresh">تحديث</button><button class="theme" data-act="logout">خروج</button></div></header>
-   ${hasC?`<div class="tool">${csel}</div>`:''}
-   <nav class="tabs" role="tablist">${hasC?T('rec','تسجيل الحضور')+T('off','كشف النظام الرسمي')+T('log','سجل الطلاب')+T('man','قوائم الطلاب'):''}${T('crs','المساقات')}${IS_OWNER?T('adm','المشرفون'):''}</nav>
-   ${main}`;
+  const csel=hasC?`<div class="field"><label for="f-course">المساق</label><select id="f-course" data-f="course" style="min-width:220px">${[...COURSES.values()].map(c=>`<option value="${c.id}" ${c.id===V.cid?'selected':''}>${esc(c.code)} · ${esc(c.name)}</option>`).join('')}</select></div>`:'';
+  const none=!hasC&&!IS_GLOBAL?`<div class="notice">لم تُضَف إلى أي مساق بعد. اطلب من مدير النظام إضافتك.</div>`:'';
+  return `<header class="topbar"><div><div class="eyebrow">نظام حضور المساقات${hasC?' · '+esc(CC.term||''):''}</div><h1>${hasC?'حضور مساق '+esc(CC.name):'نظام حضور المساقات'}</h1></div>
+   <div class="acts">${csel}<button class="theme" data-act="theme">${themeLabel()}</button><button class="theme" data-act="refresh">تحديث</button><button class="theme" data-act="logout">خروج</button></div></header>
+   <nav class="tabs" role="tablist">${hasC?T('rec','تسجيل الحضور')+T('off','كشف النظام الرسمي')+T('log','سجل الطلاب')+T('man','قوائم الطلاب'):''}${T('adm','الإدارة')}</nav>
+   ${none}${main}`;
 }
 function renderAll(){
   if(isStudent)return renderStudent();
@@ -568,13 +647,15 @@ function renderAll(){
   if(open&&live.sid!==V.sid)startLive();
   else if(open&&V.tab==='rec'){live.qr=null;drawQR();updateLive()}
 }
+const EYE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>';
 function renderLogin(msg){
   $('#app').innerHTML=`<div class="stu"><div class="row" style="justify-content:flex-end"><button class="theme" data-act="theme">${themeLabel()}</button></div>
-  <div><div class="eyebrow">نظام حضور المساقات</div><h1>دخول المدرّس</h1></div>
-  <form class="card" id="login">
+  <div><div class="eyebrow">نظام حضور المساقات</div><h1>تسجيل الدخول</h1></div>
+  <form class="card" id="login" autocomplete="on">
    <div class="field"><label for="l-mail">البريد الإلكتروني</label><input id="l-mail" type="email" dir="ltr" autocomplete="username" required></div>
-   <div class="field"><label for="l-pass">كلمة المرور</label><input id="l-pass" type="password" dir="ltr" autocomplete="current-password" required></div>
-   ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="btn primary" type="submit">دخول</button></form></div>`;
+   <div class="field"><label for="l-pass">كلمة المرور</label><div class="pw"><input id="l-pass" type="password" dir="ltr" autocomplete="current-password" required><button type="button" class="eye" data-act="eye" aria-pressed="false" aria-label="إظهار كلمة المرور">${EYE}</button></div></div>
+   ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="btn primary" type="submit">تسجيل الدخول</button></form></div>`;
 }
 
 /* ---------- import (university xlsx) ---------- */
@@ -588,6 +669,7 @@ function parseUniSheet(ws){
   return{meta,rows};
 }
 async function importFiles(files,kind){
+  await loadLibs();
   if(typeof XLSX==='undefined')return toast('مكتبة Excel لم تُحمَّل. تحقق من الاتصال');
   let added=0,updated=0,sheets=0;const warn=[];
   for(const f of files){
@@ -609,7 +691,7 @@ async function importFiles(files,kind){
     }
   }
   if(!sheets)return toast(warn[0]||'لم أجد قوائم طلاب في الملف');
-  await saveCourse(CC);COURSES.set(CC.id,CC);
+  if(IS_GLOBAL){await saveCourse(CC);COURSES.set(CC.id,CC)}
   try{let b=writeBatch(db),k=0;for(const s of students()){b.set(cref('students',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi});if(++k%400===0){await b.commit();b=writeBatch(db)}}await b.commit()}
   catch(e){console.error(e);return toast('تعذّر حفظ القوائم')}
   toast(`تم: ${added} طالب جديد، ${updated} محدّث${warn.length?' · '+warn.join('، '):''}`);renderAll();
@@ -637,11 +719,34 @@ function downloadCSV(name,aoa){
   const csv='﻿'+aoa.map(r=>r.map(c=>{c=c==null?'':String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
 }
-function downloadXLSX(name,sheets){
+async function downloadXLSX(name,sheets){
+  await loadLibs();
   if(typeof XLSX==='undefined')return toast('مكتبة Excel لم تُحمَّل. جرّب تنزيل CSV');
   const wb=XLSX.utils.book_new();
   sheets.forEach(([n,aoa,w])=>{const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=(w||aoa[0].map(()=>16)).map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n.slice(0,31))});
   wb.Workbook={Views:[{RTL:true}]};XLSX.writeFile(wb,name);
+}
+function downloadFile(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+function bkDownload(){
+  const j={v:1,at:Date.now(),course:courseData(CC),
+    students:students().map(s=>({id:s.id,name:s.name,off:s.off,mam:s.mam,oi:s.oi,mi:s.mi})),
+    sessions:Object.entries(S.sessions).map(([id,s])=>({id,date:s.date,sec:s.sec,status:s.status==='open'?'closed':s.status})),
+    records:Object.entries(S.records).map(([id,r])=>({id,date:r.date,sec:r.sec,draft:r.draft,src:r.src||{},times:r.times||{},final:r.final||null,committedAt:r.committedAt||null,history:r.history||[]}))};
+  downloadFile(fn('backup_'+today())+'.json',new Blob([JSON.stringify(j)],{type:'application/json'}));toast('تم تنزيل النسخة الاحتياطية');
+}
+async function restoreBackup(file){
+  let j;try{j=JSON.parse(await file.text())}catch(e){return toast('الملف غير صالح')}
+  if(!j||j.v!==1||!j.course||!Array.isArray(j.students))return toast('هذا ليس ملف نسخة احتياطية صالح');
+  const id='c'+rand().slice(0,5);const c={...j.course,id,name:j.course.name+' (مستعاد)',deletedAt:null};
+  toast('جارٍ الاستعادة...');
+  try{
+    await setDoc(doc(db,'courses',id),courseData(c));
+    let b=writeBatch(db),n=0;const add=(ref,d)=>{b.set(ref,d);return(++n%400===0)?b.commit().then(()=>{b=writeBatch(db)}):null};
+    for(const s of j.students){const p=add(doc(db,'courses',id,'students',String(s.id)),{name:s.name,off:s.off,mam:s.mam,oi:s.oi||0,mi:s.mi||0,deletedAt:null});if(p)await p}
+    for(const s of j.sessions||[]){const p=add(doc(db,'courses',id,'sessions',s.id),{date:s.date,sec:s.sec,status:'closed',openedAt:Date.now(),courseName:c.name,courseCode:c.code,room:((c.mam||[]).find(m=>m.n===s.sec)||{}).room||'',deletedAt:null});if(p)await p}
+    for(const r of j.records||[]){const p=add(doc(db,'courses',id,'records',r.id),r);if(p)await p}
+    await b.commit();COURSES.set(id,{id,...courseData(c)});await selectCourse(id);V.tab='rec';renderAll();toast('تمت الاستعادة كمساق جديد');
+  }catch(e){console.error(e);toast('تعذّرت الاستعادة')}
 }
 const fn=(a)=>`${CC.code.replace(/[^\w]/g,'')||'course'}_${a}`;
 function sessionExport(){
@@ -679,15 +784,16 @@ function fullReport(){
 const ST={step:'load',msg:'',who:null,sess:null,loadedAt:Date.now()};
 const sref=(...p)=>doc(db,'courses',hashM[1],...p);
 async function initStudent(){
+  await sdkP;ST.loadedAt=ST.loadedAt||Date.now();
   const sid=hashM[2];
-  try{const d=await getDoc(sref('sessions',sid));ST.sess=d.exists()?d.data():null}catch(e){ST.sess=null}
+  try{const d=await getDoc(sref('sessions',sid));ST.sess=d.exists()&&!d.data().deletedAt?d.data():null}catch(e){ST.sess=null}
+  if(ST.step==='done')return;
   if(!ST.sess)ST.step='bad',ST.msg='لم يتم العثور على هذه الجلسة. تأكد من مسح الرمز المعروض في القاعة.';
   else if(ST.sess.status!=='open')ST.step='bad',ST.msg='تم إغلاق تسجيل الحضور لهذه المحاضرة. راجع المدرّس.';
-  else ST.step='id';
-  ST.loadedAt=Date.now();renderStudent();
+  renderStudent();
 }
 function renderStudent(){
-  const s=ST.sess;
+  const s=ST.sess;const keep=$('#sid-in')?$('#sid-in').value:'';
   const head=`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">${s?esc(s.courseCode||''):'نظام حضور المساقات'}</div><h1>${s?'حضور مساق '+esc(s.courseName||''):'حضور المساق'}</h1>${s?`<div class="small muted">${dayName(s.date)} ${fmtDate(s.date)}${s.room?' · '+esc(s.room):''}</div>`:''}</div><button class="theme" data-act="theme">${themeLabel()}</button></div>`;
   let body='';
   if(ST.step==='load')body='<p class="muted">جارٍ التحقق من الرمز...</p>';
@@ -696,17 +802,19 @@ function renderStudent(){
   else if(ST.step==='confirm')body=`<div class="center"><div class="muted small">هل هذا أنت؟</div><h2 style="font-size:20px;margin-top:4px">${esc(ST.who.name)}</h2><div class="muted" dir="ltr">${ST.who.id}</div></div>${ST.msg?`<div class="err">${esc(ST.msg)}</div>`:''}<button class="btn primary" data-act="confirm">نعم، سجّل حضوري</button><button class="btn ghost" data-act="back">ليس أنا</button>`;
   else if(ST.step==='done')body=`<div class="ok">✓</div><div class="center"><h2>تم تسجيل حضورك</h2><div class="muted small" style="margin-top:4px">${esc(ST.who.name)}</div></div>`;
   $('#app').innerHTML=`<div class="stu">${head}<section class="card">${body}</section><p class="small muted center">الغياب يُحتسب حسب شعبتك الرسمية في النظام، وليس حسب القاعة.</p></div>`;
-  const i=$('#sid-in');if(i)i.focus();
+  const i=$('#sid-in');if(i){if(keep)i.value=keep;i.focus()}
 }
 async function stuLookup(){
+  await sdkP;
   const v=($('#sid-in').value||'').replace(/\D/g,'');
   if(!v){ST.msg='اكتب رقمك الجامعي.';return renderStudent()}
   try{const d=await getDoc(sref('students',v));
-    if(!d.exists()){ST.msg='هذا الرقم غير موجود في قائمة المساق.';return renderStudent()}
+    if(!d.exists()||d.data().deletedAt){ST.msg='هذا الرقم غير موجود في قائمة المساق.';return renderStudent()}
     ST.who={id:v,name:d.data().name};ST.msg='';ST.step='confirm';renderStudent();
   }catch(e){ST.msg='تعذّر الاتصال. حاول مرة أخرى.';renderStudent()}
 }
 async function stuConfirm(){
+  await sdkP;
   const sid=hashM[2],tok=hashM[3];
   if(Date.now()-ST.loadedAt>5*60*1000){ST.step='bad';ST.msg='انتهت مهلة الصفحة. امسح الرمز مرة أخرى.';return renderStudent()}
   const k='dev_'+hashM[1]+'_'+sid;let prev=null;try{prev=localStorage.getItem(k)}catch(e){}
@@ -728,8 +836,20 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b||b.tagName==='INPUT')return;const a=b.dataset.act;
   switch(a){
    case'theme':cycleTheme();break;
+   case'eye':{const i=$('#l-pass');const show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-pressed',show);b.setAttribute('aria-label',show?'إخفاء كلمة المرور':'إظهار كلمة المرور');b.innerHTML=show?EYE_OFF:EYE;break}
+   case'stay':break;
+   case'sub':V.sub=b.dataset.v;renderAll();break;
+   case'bkdl':bkDownload();break;
+   case'rs':{const sid=b.dataset.id;if(S.sessions[sid])return toast('توجد جلسة بنفس التاريخ والمجموعة حالياً. احذفها أو عدّلها أولاً');
+     const s=S.trash.sessions[sid];s.deletedAt=null;S.sessions[sid]=s;S.records[sid]=S.trash.records[sid]||{date:s.date,sec:s.sec,draft:{},src:{},times:{},final:null,committedAt:null,history:[]};
+     delete S.trash.sessions[sid];delete S.trash.records[sid];idxDirty=true;renderAll();toast('تم استرجاع الجلسة');await saveSession(sid);break}
+   case'rsp':{const sid=b.dataset.id;delete S.trash.sessions[sid];delete S.trash.records[sid];renderAll();await purgeSession(sid);toast('حُذفت نهائياً');break}
+   case'rt':{const id=+b.dataset.id;const s=S.trash.students.get(id);if(STU.has(id))return toast('الرقم موجود حالياً');s.deletedAt=null;STU.set(id,s);S.trash.students.delete(id);renderAll();toast('تم استرجاع الطالب');await saveStudent(s);break}
+   case'rtp':{const id=+b.dataset.id;S.trash.students.delete(id);renderAll();deleteDoc(cref('students',String(id))).catch(()=>{});toast('حُذف نهائياً');break}
+   case'rc':{const id=b.dataset.id;const c=COURSE_TRASH.get(id);c.deletedAt=null;COURSES.set(id,c);COURSE_TRASH.delete(id);await saveCourse(c);if(!CC)await selectCourse(id);renderAll();toast('تم استرجاع المساق');break}
+   case'rcp':{const id=b.dataset.id;COURSE_TRASH.delete(id);renderAll();await purgeCourse(id);toast('حُذف نهائياً');break}
    case'refresh':try{await loadAll();renderAll();toast('تم تحديث البيانات')}catch(e){toast('تعذّر التحديث')}break;
-   case'logout':stopLive();watchCheckins(null);await signOut(auth);break;
+   case'logout':logout('manual');break;
    case'tab':V.tab=b.dataset.v;renderAll();break;
    case'startqr':ensureSession('open');break;
    case'startman':ensureSession('closed');break;
@@ -756,14 +876,14 @@ document.addEventListener('click',async e=>{
      const txt=ids.join('\n');V.copy=null;
      try{await navigator.clipboard.writeText(txt);toast(ids.length?`نُسخ ${ids.length} رقم`:'لا يوجد غائبون')}catch(_){V.copy=txt;renderAll();const t=$('#copybox');if(t){t.focus();t.select()}}break}
    case'mdel':V.mdel=+b.dataset.id;renderAll();break;
-   case'mdelok':{const id=+b.dataset.id;STU.delete(id);V.mdel=null;renderAll();deleteDoc(cref('students',String(id))).catch(()=>toast('تعذّر الحذف'));break}
+   case'mdelok':{const id=+b.dataset.id;const s=STU.get(id);s.deletedAt=Date.now();S.trash.students.set(id,s);STU.delete(id);V.mdel=null;renderAll();saveStudent(s);toast('نُقل الطالب إلى سلة المحذوفات');break}
    case'madd':{const id=+($('#n-id').value||'').replace(/\D/g,'');const name=$('#n-name').value.trim();
      if(!id||!name)return toast('اكتب الرقم الجامعي والاسم');if(STU.has(id))return toast('هذا الرقم موجود مسبقاً');
      const off=+$('#n-off').value,mam=+$('#n-mam').value;const all=students();
      const s={id,name,off,mam,oi:Math.max(0,...all.filter(x=>x.off===off).map(x=>x.oi))+1,mi:Math.max(0,...all.filter(x=>x.mam===mam).map(x=>x.mi))+1};
      STU.set(id,s);saveStudent(s);renderAll();toast('تمت الإضافة');break}
    case'cnew':V.cf=emptyCourse();renderAll();break;
-   case'cedit':{const c=COURSES.get(b.dataset.id);V.cf=JSON.parse(JSON.stringify(courseData(c)));V.cf.id=c.id;renderAll();break}
+   case'cedit':{const c=COURSES.get(b.dataset.id);V.cf=JSON.parse(JSON.stringify(courseData(c)));V.cf.id=c.id;V.cf.adminsTxt=(c.admins||[]).join('\n');renderAll();break}
    case'ccancel':V.cf=null;renderAll();break;
    case'cadd':{const g=b.dataset.g;const c=V.cf;
      if(g==='off')c.off.push({n:Math.max(0,...c.off.map(x=>x.n))+1,day:2});
@@ -773,6 +893,7 @@ document.addEventListener('click',async e=>{
    case'csave':{const c=V.cf;
      c.code=String(c.code).trim();c.name=String(c.name).trim();c.lectureWeeks=+c.lectureWeeks;c.totalWeeks=+c.totalWeeks;c.absLimit=+c.absLimit;
      c.off.forEach(o=>{o.n=+o.n;o.day=+o.day});c.mam.forEach(o=>{o.n=+o.n;o.day=+o.day});
+     c.admins=String(c.adminsTxt||'').split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(x=>/^\S+@\S+\.\S+$/.test(x));delete c.adminsTxt;
      if(!c.code||!c.name)return toast('اكتب رمز المساق واسمه');
      if(!c.termStart||parse(c.termStart).getDay()!==0)return toast('أول يوم تدريس لازم يكون يوم أحد');
      if(!(c.lectureWeeks>0)||!(c.totalWeeks>=c.lectureWeeks))return toast('تحقق من عدد الأسابيع');
@@ -785,9 +906,8 @@ document.addEventListener('click',async e=>{
      if(isNew)V.tab='man';
      toast('تم حفظ المساق');renderAll();break}
    case'cdel':V.cdel=b.dataset.id;renderAll();break;
-   case'cdelok':{const id=b.dataset.id;V.cdel=null;toast('جارٍ الحذف...');
-     try{for(const n of['students','sessions','records','tokens','checkins'])await wipe('courses',id,n);await deleteDoc(doc(db,'courses',id));COURSES.delete(id);
-       if(V.cid===id){const nx=COURSES.size?[...COURSES.keys()][0]:null;await selectCourse(nx)}toast('تم حذف المساق')}catch(e){console.error(e);toast('تعذّر الحذف')}renderAll();break}
+   case'cdelok':{const id=b.dataset.id;V.cdel=null;const c=COURSES.get(id);c.deletedAt=Date.now();COURSE_TRASH.set(id,c);COURSES.delete(id);
+     try{await saveCourse(c);if(V.cid===id){const nx=COURSES.size?[...COURSES.keys()][0]:null;await selectCourse(nx)}toast('نُقل المساق إلى سلة المحذوفات (30 يوماً)')}catch(e){console.error(e);toast('تعذّر الحذف')}renderAll();break}
    case'legacy':legacyImport();break;
    case'admadd':{const m=($('#a-mail').value||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(m))return toast('اكتب بريداً صحيحاً');if(ADMINS.includes(m)||m===OWNER)return toast('هذا البريد موجود');
      ADMINS=[...ADMINS,m];try{await setDoc(doc(db,'config','admins'),{emails:ADMINS});toast('تمت إضافة المشرف')}catch(e){ADMINS=ADMINS.filter(x=>x!==m);toast('تعذّر الحفظ: تأكد من نشر القواعد الجديدة')}renderAll();break}
@@ -816,6 +936,8 @@ document.addEventListener('change',async e=>{
     if(f==='moff'){s.off=v;s.oi=Math.max(0,...all.filter(x=>x.off===v&&x!==s).map(x=>x.oi))+1}
     else{s.mam=v;s.mi=Math.max(0,...all.filter(x=>x.mam===v&&x!==s).map(x=>x.mi))+1}
     saveStudent(s);toast('تم نقل الطالب');renderAll()}
+  else if(f==='hist'){if(t.value==='')return;const c=cur();const h=c.r.history[+t.value];c.r.draft={...h.final};saveRecordSoon(V.sid);refreshRows();t.value='';toast('حُمّلت النسخة كمسودة. اضغط «ترحيل التعديلات» لتثبيتها')}
+  else if(f==='restore'){const file=t.files[0];if(file)await restoreBackup(file);t.value=''}
   else if(f==='import'){const files=[...t.files];if(!files.length)return;const kind=$('#i-kind').value;
     try{await importFiles(files,kind)}catch(err){console.error(err);toast('تعذّر قراءة الملف')}t.value=''}
 });
@@ -829,26 +951,48 @@ document.addEventListener('input',e=>{
     box.hidden=!res.length;box.innerHTML=res.map(x=>`<button data-act="addv" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted">${x.id} · مجموعة ${x.mam}</span></button>`).join('')}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='sid-in')stuLookup()});
+document.addEventListener('toggle',e=>{if(e.target.id==='terms')V.termOpen=e.target.open},true);
 document.addEventListener('submit',async e=>{
   if(e.target.id!=='login')return;e.preventDefault();
-  try{await signInWithEmailAndPassword(auth,$('#l-mail').value.trim(),$('#l-pass').value)}
+  const mail=$('#l-mail').value.trim(),pass=$('#l-pass').value;
+  try{await sdkP;await signInWithEmailAndPassword(auth,mail,pass)}
   catch(err){renderLogin('تعذّر تسجيل الدخول. تحقق من البريد وكلمة المرور.')}
 });
 
+/* ---------- idle logout ---------- */
+const IDLE_MS=10*60*1000;let lastAct=Date.now(),idleTimer=null,loginMsg='';
+const hideIdle=()=>{const e=$('#idle');if(e)e.remove()};
+const act=()=>{lastAct=Date.now();hideIdle()};
+['pointerdown','keydown','scroll','touchstart','input'].forEach(ev=>document.addEventListener(ev,act,{capture:true,passive:true}));
+function showIdle(sec){let e=$('#idle');if(!e){e=document.createElement('div');e.id='idle';e.className='idle';e.innerHTML='<span id="idle-t"></span><button class="btn sm" data-act="stay">ابقَ مسجّلاً</button>';document.body.appendChild(e)}$('#idle-t').textContent=`سيتم تسجيل خروجك بعد ${sec} ثانية لعدم النشاط`}
+function startIdle(){clearInterval(idleTimer);lastAct=Date.now();
+  idleTimer=setInterval(()=>{if(!USER)return;if(live.sid){lastAct=Date.now();return}
+    const idle=Date.now()-lastAct;if(idle>=IDLE_MS)logout('idle');else if(idle>=IDLE_MS-60000)showIdle(Math.ceil((IDLE_MS-idle)/1000))},1000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&USER&&!live.sid&&Date.now()-lastAct>=IDLE_MS)logout('idle')});
+async function logout(reason){
+  stopLive();watchCheckins(null);hideIdle();clearInterval(idleTimer);
+  loginMsg=reason==='idle'?'تم تسجيل خروجك تلقائياً بعد 10 دقائق من عدم النشاط.':'';
+  try{await signOut(auth)}catch(e){}
+}
+
 /* ---------- boot ---------- */
-if(!configured){
-  $('#app').innerHTML=`<div class="stu"><section class="card"><h2>الموقع غير مفعّل بعد</h2><p class="muted">افتح الملف <b dir="ltr">firebase-config.js</b> والصق فيه إعدادات مشروع Firebase حسب خطوات الشرح.</p></section></div>`;
-}else if(isStudent){renderStudent();initStudent()}
-else{
-  renderLogin();
+async function boot(){
+  if(!configured){
+    $('#app').innerHTML=`<div class="stu"><section class="card"><h2>الموقع غير مفعّل بعد</h2><p class="muted">افتح الملف <b dir="ltr">firebase-config.js</b> والصق فيه إعدادات مشروع Firebase حسب خطوات الشرح.</p></section></div>`;return;
+  }
+  if(isStudent){ST.step='id';ST.loadedAt=Date.now();renderStudent();sdkP=loadSDK(true);try{await sdkP}catch(e){ST.step='bad';ST.msg='تعذّر تحميل الصفحة. تحقق من الاتصال وأعد المحاولة.';renderStudent();return}initStudent();return}
+  renderLogin();sdkP=loadSDK(false);
+  try{await sdkP;await setPersistence(auth,browserSessionPersistence)}catch(e){console.error(e)}
   onAuthStateChanged(auth,async u=>{
     USER=u;IS_OWNER=!!(u&&u.email&&OWNER&&u.email.toLowerCase()===OWNER);
-    if(!u){stopLive();watchCheckins(null);renderLogin();return}
+    if(!u){stopLive();watchCheckins(null);COURSES.clear();COURSE_TRASH.clear();STU.clear();S.sessions={};S.records={};CC=null;V.cid=null;V.sid=null;V.cf=null;const m=loginMsg;loginMsg='';renderLogin(m);return}
     $('#app').innerHTML='<div class="stu"><p class="muted center">جارٍ تحميل البيانات...</p></div>';
+    startIdle();loadLibs();
     try{await loadAll();renderAll()}
     catch(e){console.error(e);$('#app').innerHTML='<div class="stu"><div class="err">تعذّر تحميل البيانات. تأكد أن قواعد Firestore الجديدة منشورة وأن بريدك مسجّل كمالك أو مشرف.</div><button class="theme" data-act="logout">خروج</button></div>'}
   });
 }
+boot();
 </script>
 </body>
 </html>
